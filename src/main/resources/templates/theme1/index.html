@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	
+	<style>
+  
+    
+    #autocomplete {
+	background-image: url('theme1/img/searchicon.png'); /* Add a search icon to input */
+    background-position: 10px 8px; /* Position the search icon */
+    background-repeat: no-repeat; /* Do not repeat the icon image */
+      font-size: 18px;
+ 	 padding: 6px 6px 6px 40px;
+  	/*border: 1px solid #ddd;*/
+  	margin-bottom: 12px;
+  	margin:0 auto;
+  	height:40px;
+	}
+    
+    .jstree-open > .jstree-anchor > .fa-folder:before {
+        content: "\f07c";
+    }
+
+    .jstree-default .jstree-icon.none {
+        width: 0;
+    }
+
+	</style>
+	
+    <meta charset="utf-8"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+
+    <title>Cloud Analytics Service</title>
+
+    <link href="theme1/css/bootstrap.min.css" rel="stylesheet"></link>
+    <link href="theme1/font-awesome/css/font-awesome.css" rel="stylesheet"></link>
+
+    <link href="theme1/css/animate.css" rel="stylesheet"></link>
+    <link href="theme1/css/style.css" rel="stylesheet"></link>
+	
+	<link href="theme1/css/bootstrap.min.css" rel="stylesheet"></link>
+    <link href="theme1/font-awesome/css/font-awesome.css" rel="stylesheet"></link>
+	<link href="theme1/css/plugins/jsTree/style.min.css" rel="stylesheet"></link>
+    <link href="theme1/css/plugins/switchery/switchery.css" rel="stylesheet"></link>
+    <link href="theme1/css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet"></link>
+    <link href="theme1/css/plugins/datapicker/datepicker3.css" rel="stylesheet">
+    <link href="theme1/css/animate.css" rel="stylesheet"></link>
+    <link href="theme1/css/style.css" rel="stylesheet"></link>
+    <link rel="stylesheet" href="theme1/js/jquery-ui-1.12.1/jquery-ui.css"></link>
+    
+
+</head>
+
+<body onLoad="refreshClusters()">
+
+<!-- Mainly scripts -->
+<script src="theme1/js/jquery-3.1.1.min.js"></script>
+<script src="theme1/js/bootstrap.min.js"></script>
+<script src="theme1/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="theme1/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="theme1/js/inspinia.js"></script>
+<script src="theme1/js/plugins/pace/pace.min.js"></script>
+
+<div id="wrapper">
+
+    <nav class="navbar-default navbar-static-side" role="navigation">
+        <div class="sidebar-collapse">
+            
+            <ul class="nav metismenu" id="side-menu">
+                <li class="nav-header">
+                <div class="logo">
+                            <div><img alt="Hortonworks Cloud Analytics Service" src="./img/cb_logo.png" title="Hortonworks Cloud Analytics Service"></div>
+                           <!--  <div><span class="nav-label">Cloud Analytics Service</span></div> -->
+                    </div>
+                    <!-- <div class="dropdown profile-element">
+                            <img alt="Hortonworks Cloud Analytics Service" src="./img/cb_logo.png" title="Hortonworks Cloud Analytics Service">
+                            <span class="persona-name"></span>
+                    </div> 
+                    <div class="logo-element"> 
+                        
+                    </div> 
+                </li>-->
+                <li class="active">
+                    <a href="#" onclick="exploreAtlas()"><i class="fa fa-book"></i> <span class="nav-label">Browse Catalog</span></a>
+                </li>
+                <li class="active">
+                    <a href="#" onclick="displayWizard()"><i class="fa fa-server"></i> <span class="nav-label">Provision Demo</span></a>
+                </li>
+                <li class="active">
+                    <a href="index.html" onclick="refreshArtifacts()"><i class="fa fa-history"></i> <span class="nav-label">Synch Artifacts</span></a>
+                </li>
+               <!--  <li>
+                    <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Minor view</span> </a>
+                </li>  -->
+            </ul>
+
+        </div>
+    </nav>
+
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+                <!-- <div class="navbar-header">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+                    <form role="search" class="navbar-form-custom" method="post" action="#">
+                        <div class="form-group">
+                            <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search"></input>
+                        </div>
+                    </form>
+                </div> -->
+                <ul class="nav navbar-top-links navbar-right">
+                    <li>
+                        <a href="#">
+                            <i class="fa fa-sign-out"></i> Log out
+                        </a>
+                    </li>
+                </ul>
+
+            </nav>
+        </div>
+        <!-- <div class="wrapper wrapper-content animated fadeInRight">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="text-center m-t-lg">
+                        <h1>
+                            Welcome to Historian
+                        </h1>
+                        <small>
+                            Pick a dataset for timeseries
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<div id="" class="gray-bg">  id=page-wrapper -->
+		<div class="row border-bottom"></div>
+			<div class="row wrapper border-bottom white-bg page-heading"></div>
+				<div class="wrapper wrapper-content animated fadeInRight">
+    				<div class="row">
+					<div id="catalog_search" class="col-lg-3" style="display: none">
+            				<div class="ibox float-e-margins">
+                				<div class="ibox-title">
+                    			<!-- <h5>Atlas Explorer</h5>  
+                    				<div style="display: none;float: left; padding-bottom: 15px;"><button onclick="exploreAtlas()" class="btn btn-default" style="float: left; border-color: #456b7e; color: #456b7e;">Atlas Explorer</button></div>
+                    				<div style="float: left; padding-bottom: 15px;"><button onclick="displayWizard()" class="btn btn-default" style="float: left; border-color: #456b7e; color: #456b7e;">Provision Demo</button></div>
+                    				<div style="padding-bottom: 15px;"><button onclick="refreshArtifacts()" class="btn btn-default" style="float: left; border-color: #456b7e; color: #456b7e;">Synch Artifacts</button></div> -->
+                    				<div class="ibox-tools">
+                        				<a class="collapse-link">
+                            				<i class="fa fa-chevron-up"></i>
+                        				</a>
+                    				</div>
+                				</div>
+                				<div class="ibox-title">
+                   					<input value="" style="box-shadow:inset 0 0 4px #eee; width:220px; margin:0; padding:6px 12px; border-radius:4px; border:1px solid silver; font-size:1.1em;" id="demo_q" placeholder="Search" type="text">
+                				</div>
+                				<div class="ibox-content">
+									<div id="using_json"></div>
+                				</div>
+            			  </div>
+        			  </div>
+    				<div id="atlas" class="col-lg-9">	
+    					<div id="atlas_viewer_container" class="ibox float-e-margins" style="display: none">
+    						<div id="atlas_viewer" class="ibox-content" style="height: 300px;">
+    						</div>
+    					</div>
+    				</div>
+   					<div id="wizard" class="col-lg-9">	
+    					<div id="form_container" class="ibox float-e-margins" style="display: none">
+    						<div class="ibox-content" style="height: 325px;">
+    							<form id="main_form">
+    							<h3 class="form-group-title">General Configuration</h3>
+            						<div class="form-group">
+                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Target Cloud Platform</label>
+                  						<div class="col-sm-9">
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="platform" onChange="populateOptions()" required>
+                        						<option value="connected-platform" selected="selected">Select Target Cloud</option>
+                        						<option value="AWS">AWS</option>
+    											<option value="OPENSTACK">OPENSTACK</option>
+                     						</select>
+                  						</div>
+                					</div>
+    								<div class="form-group required" id="general_info_body">
+                  						<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
+                  						<div class="col-sm-9">
+                     						<input type="text" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled id="cluster_name" name="clusterName" placeholder="(REQUIRED) Enter cluster name (min 5, max 20, must start with a letter, accepted chars: a-z, 0-9, -)" style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  						</div>
+                  						<div class="form-group">
+                  							<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
+                  							<div class="col-sm-9">
+                     							<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="cluster_type" required disabled>
+                        							<option value="connected-platform" selected="selected">Connected Platform</option>
+                        							<option value="historian">Historian</option>
+                     							</select>
+                  							</div>
+                  						</div>	
+               						</div>    				
+    							<h3 class="form-group-title">Hardware &amp; Storage</h3>
+    			 				<div class="form-group">
+                  					<label class="col-sm-3 control-label" for="selecthdpVersion">Instance Type</label>
+                  					<div class="col-sm-9">
+                     					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="templates" required disabled>
+                     					</select>
+                  					</div>
+                  				</div>
+								<h3 class="form-group-title">Security</h3>
+    							<div class="form-group">
+                  					<label class="col-sm-3 control-label" for="selecthdpVersion">Credentials</label>
+                  					<div class="col-sm-9">
+                     					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="credentials" required disabled></select>	
+                  					</div>
+                  				</div>
+    							</form>
+    							<div id="button_create_cluster">
+    								<button id="create_cluster" disabled onclick="createCluster(false)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">Create Cluster</button>
+    							</div>
+    						</div>
+						</div>	 	
+    				</div>
+    				<div id="ephemerial_wizard" class="col-lg-9">	
+    					<div id="ephemeral_form_container" class="ibox float-e-margins" style="display: none">
+    						<div class="ibox-content" style="height: 350px;">
+    							<form id="ephemeral_main_form" >
+    							<h3 class="form-group-title">General Configuration</h3>
+            						<div class="form-group">
+                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Target Cloud Platform</label>
+                  						<div class="col-sm-9">
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_platform" onChange="populateEphemeralClusterOptions()" required>
+                        						<option value="" selected="selected">Select Target Cloud</option>
+                        						<option value="AWS">AWS</option>
+    											<option value="OPENSTACK">OPENSTACK</option>
+                     						</select>
+                  						</div>
+                					</div>
+                					<div class="form-group required" id="ephemeral_general_info_body">
+                  						<label class="col-sm-3 control-label" for="clusterName">Target Bucket</label>
+                  						<div class="col-sm-9">
+                     						<input type="text" id="ephemeral_target_bucket" name="targetBucket" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  						</div>
+                  					</div>	
+    								<div class="form-group required" id="ephemeral_general_info_body">
+                  						<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
+                  						<div class="col-sm-9">
+                     						<input type="text" id="ephemeral_cluster_name" name="clusterName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  						</div>
+                  					</div>	
+                  					<div class="form-group">
+										<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
+                  						<div class="col-sm-9">
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_cluster_type" required disabled>
+                        						<option value="shared-services" selected="selected">Ephemeral</option>
+                     						</select>
+                  						</div>
+                  					</div>
+                  							
+    								<h3 class="form-group-title">Hardware &amp; Storage</h3>
+    			 					<div class="form-group">
+                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Instance Type</label>
+                  						<div class="col-sm-9">
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_templates" required disabled></select>
+                  						</div>
+                  					</div>
+									<h3 class="form-group-title">Security</h3>
+    								<div class="form-group">
+                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Credentials</label>
+                  						<div class="col-sm-9">
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_credentials" required disabled></select>
+                  						</div>
+                  					</div>
+    							</form>
+    							<div id="button_create_cluster">
+    								<button id="create_ephemeral_cluster" disabled onclick="createCluster(true)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">Create Cluster</button>
+    							</div>
+    						</div>
+						</div>	 	
+    				</div>
+				</div>
+				<div class="row cards-row"id="clusters"></div>
+			</div>
+		</div>
+	</div>
+
+<!-- Mainly scripts -->
+<script src="theme1/js/jquery-3.1.1.min.js"></script>
+<script src="theme1/js/bootstrap.min.js"></script>
+<script src="theme1/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="theme1/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="theme1/js/inspinia.js"></script>
+<script src="theme1/js/plugins/pace/pace.min.js"></script>
+<script src="theme1/js/plugins/jsTree/jstree.min.js"></script>
+
+<!-- 
+<script src="theme1/js/highcharts/highcharts.js"></script>
+<script src="theme1/js/highcharts/heatmap.js"></script>
+<script src="theme1/js/highcharts/exporting.js"></script>
+<script src="theme1/js/highcharts/highstock.js"></script> 
+<script src="theme1/js/highcharts/highcharts-more.js"></script>
+-->
+
+<!-- Switchery -->
+<script src="theme1/js/plugins/switchery/switchery.js"></script>
+<script src="theme1/js/jquery-ui-1.12.1/jquery-ui.js"></script><!-- Data picker -->
+<script src="theme1/js/plugins/datapicker/bootstrap-datepicker.js"></script>
+   
+
+<script>
+
+function displayWizard() {
+	var form = document.getElementById('form_container')
+	
+	if (form.style.display == 'none')
+		form.style.display = 'block'
+	else
+		form.style.display = 'none'
+}
+
+function displayEphemeralWizard(targetBucket) {
+	var form = document.getElementById('ephemeral_form_container')
+	
+	if (form.style.display == 'none')
+		form.style.display = 'block'
+	else
+		form.style.display = 'none'
+	
+	document.getElementById('ephemeral_target_bucket').value = targetBucket
+}
+
+function exploreAtlas() {
+	var form = document.getElementById('atlas_viewer_container')
+	
+	if (form.style.display == 'none')
+		form.style.display = 'block'
+	else
+		form.style.display = 'none'
+		
+	var form = document.getElementById('catalog_search')
+			
+	if (form.style.display == 'none'){
+		form.style.display = 'block'
+		refreshCatalog()
+	}else{
+		form.style.display = 'none'
+	}
+}
+
+function refreshCatalog(){
+	var url = "/refreshCatalog";
+	
+	$.get(url , function() {});
+	
+	getFileTree()
+}
+
+function displayEntity(entityName) {
+	var form = document.getElementById('atlas_viewer_container')
+	
+	if (form.style.display == 'none')
+		form.style.display = 'block'
+	
+	var url = "/getAtlasEntity?entityName='"+entityName+"'"
+	
+	var name = ""
+	var qualifiedName = ""
+	var outputFormat = ""
+	var tableLocation = ""
+    var targetBucket = ""
+	var lastAccess = ""
+			
+	$.get(url , function(data) {
+		console.log(data);
+		name = data.name
+		qualifiedName = data.qualifiedName
+		outputFormat = data.sd.outputFormat
+	    tableLocation = data.sd.location
+		lastAccess = data.lastAccessTime
+		targetBucket = tableLocation.replace('/'+name, '')
+		
+		atlasViewerHtml = '<div>'+
+		'<b>Name:</b> ' +name+'<br>'+
+		'<b>qualifiedName:</b> '+qualifiedName+'<br>'+
+		'<b>outputFormat:</b> '+outputFormat+'<br>'+
+	    '<b>location:</b> '+tableLocation+'<br>'+
+		'<b>createTime:</b> '+lastAccess + '<br><br>'+
+		'<table>'+
+		'<tr><th>Column Name</th><th>Column Type</th></tr>'
+		for (var i = 0; i < data.columns.length; i++) {
+			atlasViewerHtml = atlasViewerHtml+'<tr><td>'+data.columns[i].name+'</td><td>'+data.columns[i].type+'</td></tr>'
+		}
+		atlasViewerHtml = atlasViewerHtml+'</table></div><div style="float: right;"><button onclick="displayEphemeralWizard(\''+targetBucket+'\')" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">Access Dataset</button></div>'
+		document.getElementById('atlas_viewer').innerHTML = atlasViewerHtml;
+	});
+}
+
+function isClusterNameValid() {
+	var clusterNameValue = document.getElementById("cluster_name").value;
+	var clusterNameLength = document.getElementById("cluster_name").value.length;
+	
+	if (clusterNameLength >= 5 && clusterNameValue.search(/[_!@#$%^&*()]/gi) == -1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+function populateOptions() {
+	var platform = document.getElementById('platform').value
+	
+	var url = "/getPlatformComponents?platform="+platform;
+	console.log(url);
+	
+	$.get(url , function(data) {
+		console.log(data);
+		
+		clearSelect(document.getElementById('templates'))
+		var templates = data.templates
+		for (var key in templates) {
+			if (templates.hasOwnProperty(key)) {
+			    console.log(key + " -> " + templates[key]);
+			    option = document.createElement('option')
+			    option.text = key;
+			    option.value = templates[key];
+			    document.getElementById('templates').add(option)
+			}
+		}
+		
+		clearSelect(document.getElementById('credentials'))
+		var credentials = data.credentials
+		for (var key in credentials) {
+			if (credentials.hasOwnProperty(key)) {
+			    console.log(key + " -> " + credentials[key]);
+			    option = document.createElement('option')
+			    option.text = key;
+			    option.value = credentials[key];
+			    document.getElementById('credentials').add(option)
+			}
+		}
+	});
+	document.getElementById("create_cluster").disabled = false;
+	document.getElementById("cluster_name").disabled = false;
+	document.getElementById("templates").disabled = false;
+	document.getElementById("credentials").disabled = false;
+	document.getElementById("cluster_type").disabled = false;
+}
+
+function populateEphemeralClusterOptions() {
+	var platform = document.getElementById('ephemeral_platform').value
+	
+	var url = "/getPlatformComponents?platform="+platform;
+	console.log(url);
+	
+	document.getElementById("create_ephemeral_cluster").disabled = false;
+	//document.getElementById("ephemeral_cluster_name").disabled = false;
+	//document.getElementById("ephemeral_templates").disabled = false;
+	document.getElementById("ephemeral_credentials").disabled = false;
+	//document.getElementById("ephemeral_cluster_type").disabled = false;
+	
+	document.getElementById("ephemeral_cluster_name").value = "ephemeral"+Math.floor((Math.random() * 10000) + 1)
+	
+	$.get(url , function(data) {
+		console.log(data);
+		
+		clearSelect(document.getElementById('ephemeral_cluster_type'))
+		var templates = data.templates
+		option = document.createElement('option')
+		option.text = 'Ephemeral'
+		option.value = 'shared-services'
+		document.getElementById('ephemeral_cluster_type').add(option)
+		option.selected = true
+		
+		clearSelect(document.getElementById('ephemeral_templates'))
+		var templates = data.templates
+		for (var key in templates) {
+			if (templates.hasOwnProperty(key)) {
+			    console.log(key + " -> " + templates[key]);
+			    option = document.createElement('option')
+			    option.text = key;
+			    option.value = templates[key];
+			    document.getElementById('ephemeral_templates').add(option)
+			}
+		}
+		
+		clearSelect(document.getElementById('ephemeral_credentials'))
+		var credentials = data.credentials
+		for (var key in credentials) {
+			if (credentials.hasOwnProperty(key)) {
+			    console.log(key + " -> " + credentials[key]);
+			    option = document.createElement('option')
+			    option.text = key;
+			    option.value = credentials[key];
+			    document.getElementById('ephemeral_credentials').add(option)
+			}
+		}
+	});
+}
+
+function refreshClusters(){
+	setTimeout(refreshClusters, 15000)
+	var url = "/refreshAllClusters";
+	console.log(url);
+	
+	$.get(url, function(data) {
+		console.log(data)
+		$('.cluster').remove();
+		for (var key in data) {
+			var clusterId = key
+			var clusterName = data[key].clusterName
+			var clusterType = data[key].clusterType
+			var platform = data[key].platform
+			var templateName = data[key].templateName
+			var clusterAmbariIp = data[key].clusterAmbariIp
+			var clusterStatus = data[key].clusterStatus
+		
+			paintCluster(clusterId, clusterName, clusterType, clusterStatus, platform, templateName, clusterAmbariIp)
+		}	
+	});
+}
+
+function refreshArtifacts(){
+	var url = "/refreshArtifacts";
+	console.log(url);
+	
+	$.get(url, function() {});
+}
+
+function createCluster(isEphemeral){
+	if(isEphemeral){
+		var clusterName = document.getElementById("ephemeral_cluster_name").value;
+		var clusterType = document.getElementById("ephemeral_cluster_type").value;
+		var clusterTypeName = document.getElementById("ephemeral_cluster_type").options[document.getElementById("ephemeral_cluster_type").selectedIndex].text;
+		var platform = document.getElementById("ephemeral_platform").value;
+		var templateId = document.getElementById("ephemeral_templates").value;
+		var templateName = document.getElementById("ephemeral_templates").options[document.getElementById("ephemeral_templates").selectedIndex].text
+		var credentialId = document.getElementById("ephemeral_credentials").value;
+		var targetBucket = document.getElementById("ephemeral_target_bucket").value;
+		var sharedServicesIp = "place_holder";
+	}else{
+		var clusterName = document.getElementById("cluster_name").value;
+		var clusterType = document.getElementById("cluster_type").value;
+		var clusterTypeName = document.getElementById("cluster_type").options[document.getElementById("cluster_type").selectedIndex].text;
+		var platform = document.getElementById("platform").value;
+		var templateId = document.getElementById("templates").value;
+		var templateName = document.getElementById("templates").options[document.getElementById("templates").selectedIndex].text
+		var credentialId = document.getElementById("credentials").value;
+		var targetBucket = null;
+		var sharedServicesIp = null;
+	}
+		
+	var ambariServerIp = "PENDING"
+	
+	var url = "/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesIp="+encodeURIComponent(sharedServicesIp)+"&targetBucket="+encodeURIComponent(targetBucket);
+	
+	if(isEphemeral || isClusterNameValid()){
+		console.log(url);
+		$.get(url, function(data) {
+			console.log(data);
+			paintCluster(data.id, data.name, clusterTypeName, data.status, platform, templateName, ambariServerIp)
+		});
+	
+		document.getElementById('form_container').style.display = 'none'
+		document.getElementById('ephemeral_form_container').style.display = 'none'
+		document.getElementById("ephemeral_cluster_name").value = "ephemeral"+Math.floor((Math.random() * 10000) + 1)
+	}else{
+		alert("Cluster Name must be at least 5 characters in length and not contain characters other than a-z, 0-9, -")	
+	}
+}
+
+function terminateCluster(clusterId){
+	var url = "/terminateCluster?clusterId="+clusterId
+	$.get(url, function(data) {
+		console.log(data);
+	});		
+}
+
+function paintCluster(clusterId, clusterName, clusterType, clusterStatus, platform, templateName, ambariServerIp){
+	
+	var clusterHTML = '<div id="cluster'+clusterId+'" class="cluster" style="float: left; display: block; padding-top: 10px; padding-right: 10px;padding-bottom: 10px; padding-left: 10px;">' +
+	  '	 <div class="cluster" style="font-size: 14px; float: left; width:310px; height: 205px; box-shadow: 1px 2px 5px 0 rgba(0,0,0,0.2);background-color: white;">' +
+	  '  	<div class="cluster-header" style="background: #456b7e; color: #fff; height: 60px;">' +
+	  '			<div style="margin: 0px;"><span class="label label-info ng-binding" style="float: right;">'+platform+'</span></div>' +
+	  '			<div class="cluster-title" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis; padding-left: 10px" id="cluster-'+clusterName+'">' +
+	  '				<i class="fa fa-fw fa-server" aria-hidden="true"></i> '+clusterName +
+	  '			</div>' +
+	  '			<div class="cluster-ambari-ip" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis; padding-left: 10px" id="cluster-'+clusterName+'">' +
+	  '				<i class="fa fa-fw fa-desktop" aria-hidden="true"></i> '+ambariServerIp +
+	  '			</div>' +
+	  '			<div class="cluster-status" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis; padding-left: 7px" id="cluster-'+clusterName+'">' +
+	  '				<i class="fa fa-fw fa-lg fa-check-circle" aria-hidden="true"></i> '+clusterStatus +
+	  '			</div>' +
+	  '	 	</div>' +
+	  '	<div class="cluster-summary-row" style="padding-left: 10px">' +
+	  '		<div class="cluster-summary-col">' +
+	  '			<h5>Type</h5> '+clusterType +
+	  '	 	</div>' +
+	  '	</div>	' +
+	  '	<div class="cluster-summary-row" style="padding-left: 10px">' +
+	  '		<div class="cluster-summary-col">' +
+	  '			<h5>Node Size</h5> ' + templateName +
+	  '		</div>' +
+	  '	</div>'+
+	  '	<div class="cluster-summary-row" style="padding-left: 10px; width: 300px;">' +
+//	  '		<div class="cluster-summary-col">' +
+	  '			<h5 class="card-list-title">' +
+      '  		<div class="dropdown" id="clusteraction_dropdown" style="float: left;">' +
+      '      		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu01" style="border-color: #456b7e; color: #456b7e;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">' +
+      '          		Actions<span class="caret"></span>' +
+      '      		</button>' +
+      '     		<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu02" id="cluster-actions">' +
+      '          		<li class="ng-scope" style="height: 30px; " onclick="terminateCluster('+clusterId+')">' +
+      //'					<a href="" class="" role="button" id="terminate">' +
+      '					<i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Terminate</li>' +
+      '     		</ul>' +
+      '  		</div>' +
+      '	    	</h5>'
+//	  '		</div>' +
+	  '	</div>';
+	  
+	
+	if(ambariServerIp != 'PENDING'){
+		clusterHTML = clusterHTML + 
+		 // '	<div class="cluster-summary-row" style="padding-left: 10px">' +
+		 // ' 	<div class="cluster-summary-col">' +
+	      ' 	<h5 class="card-list-title">' +
+	      '  		<div class="dropdown" id="clusteruis_dropdown" style="float: right;">' +
+	      '      		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu01" style="border-color: #456b7e; color: #456b7e;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">' +
+	      '          		Cluster UIs<span class="caret"></span>' +
+	      '      		</button>' +
+	      '     		<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu02" id="cluster-services">' +
+	      '          		<li class="ng-scope"><a href="https://'+ambariServerIp+'/'+clusterName+'/services/ambari/" class="" role="button" target="_blank">' +
+	      '						<i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Ambari Web</a></li>' +
+	      '          		<li class="ng-scope"><a href="https://'+ambariServerIp+'/'+clusterName+'/services/ambari/#/main/views/HIVE/2.0.0/AUTO_HIVE20_INSTANCE" role="button" target="_blank" class="ng-binding"><i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Hive View 2.0</a></li>' +
+	      '     		</ul>' +
+	      '  		</div>' +
+	      '	    </h5>' //+
+		//  '		</div>' +
+		//  '	</div>';
+	}
+	
+	clusterHTML = clusterHTML + '</div>';
+	
+	$("#clusters").append(clusterHTML);
+}
+
+function clearSelect(selectbox)
+{
+    var i;
+    for(i = selectbox.options.length - 1 ; i >= 0 ; i--)
+    {
+        selectbox.remove(i);
+    }
+}
+
+</script>
+
+<script>
+    $(document).ready(function(){
+
+        $('#jstree1').jstree({
+            'core' : {
+                'check_callback' : true
+            },
+            'plugins' : [ 'types', 'dnd' ],
+            'types' : {
+                'default' : {
+                    'icon' : 'fa fa-folder'
+                },
+                'html' : {
+                    'icon' : 'fa fa-file-code-o'
+                },
+                'svg' : {
+                    'icon' : 'fa fa-file-picture-o'
+                },
+                'css' : {
+                    'icon' : 'fa fa-file-code-o'
+                },
+                'img' : {
+                    'icon' : 'fa fa-file-image-o'
+                },
+                'js' : {
+                    'icon' : 'fa fa-file-text-o'
+                }
+
+            }
+        });
+
+
+    });
+</script>
+
+<script>
+								
+$(function () {
+	var to = false;
+	$('#demo_q').keyup(function () {
+		if(to) { clearTimeout(to); }
+		to = setTimeout(function () {
+			var v = $('#demo_q').val();
+			$('#using_json').jstree(true).search(v);
+		}, 250);
+	});
+});
+						
+</script>
+
+<script>
+
+/* Global / Page level variables */
+var tagsG;
+var sdateG;
+var edateG;
+var granG = "minute";
+var funcG;
+
+var series; 
+var xAxisLabels;
+
+var tree1;
+
+getFileTree()
+
+function getFileTree(){
+
+$.get("/getfiletree", function(tree) {
+//$.get("/getDssCollectionsTree", function(tree) {
+
+	tree1 = tree;
+	console.log(tree);
+	
+	//tree1.core = { label: "Hello", url: "#hello" };
+	$.extend(tree, {
+		'plugins' : [ 'types', 'dnd', 'search' ],
+        'types' : {
+            'default' : {
+                'icon' : 'fa fa-folder'
+            },
+            'html' : {
+                'icon' : 'fa fa-file-code-o'
+            },
+            'svg' : {
+                'icon' : 'fa fa-file-picture-o'
+            },
+            'css' : {
+                'icon' : 'fa fa-file-code-o'
+            },
+            'img' : {
+                'icon' : 'fa fa-file-image-o'
+            },
+            'js' : {
+                'icon' : 'fa fa-file-text-o'
+            }
+        }
+	});
+	
+	$('#using_json').on("select_node.jstree", function (e, data) { 
+		console.log(e);
+		console.log(data);
+		console.log("node: " + data.node.text);
+		entityName = data.node.text;
+		
+		displayEntity(entityName)
+		//var elem =document.getElementById('checkbox0');
+		//getTsFunction(elem, 0, "sum"); //  "2017-04-23_00:00:00", "2017-05-03_00:00:00", "sum", "minute");
+				
+	}); 
+	
+	 $('#using_json').jstree(tree);
+});
+}
+</script>
+
+
+</body>
+</html>

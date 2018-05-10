@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+
+    <title>Historian | Home</title>
+
+    <link href="theme1/css/bootstrap.min.css" rel="stylesheet"></link>
+    <link href="theme1/font-awesome/css/font-awesome.css" rel="stylesheet"></link>
+	<link href="theme1/css/plugins/jsTree/style.min.css" rel="stylesheet"></link>
+    <link href="theme1/css/plugins/switchery/switchery.css" rel="stylesheet"></link>
+    <link href="theme1/css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet"></link>
+    
+    
+    <link href="theme1/css/animate.css" rel="stylesheet"></link>
+    <link href="theme1/css/style.css" rel="stylesheet"></link>
+    
+    <link rel="stylesheet" href="theme1/js/jquery-ui-1.12.1/jquery-ui.css"></link>
+
+
+    <style>
+  
+    
+    #autocomplete {
+	background-image: url('theme1/img/searchicon.png'); /* Add a search icon to input */
+    background-position: 10px 8px; /* Position the search icon */
+    background-repeat: no-repeat; /* Do not repeat the icon image */
+      font-size: 18px;
+  padding: 6px 6px 6px 40px;
+  /*border: 1px solid #ddd;*/
+  margin-bottom: 12px;
+  margin:0 auto;
+  height:40px;
+}
+
+    </style>
+
+
+</head>
+
+<body>
+
+<div id="wrapper">
+
+
+
+<div id="" class="gray-bg"> <!-- id=page-wrapper -->
+<div class="row border-bottom">
+   
+</div>
+<div class="row wrapper border-bottom white-bg page-heading">
+    
+    <!--  <div class="col-lg-2">
+
+    </div> -->
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+
+    <div class="row">
+               <div class="col-lg-3">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Atlas Explorer</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                       
+                    </div>
+                </div>
+                
+                
+                 <div class="ibox-title">
+                   
+                 <!-- 
+				  <table>
+				    <tr>
+				      <td><label for="autocomplete" style="font-size:large;"></label></td>
+				      <td><input id="autocomplete"  class="form-control" style="width:230px;"></td>
+				      <td><button class="btn btn-default" onclick="getTable(document.getElementById('autocomplete').value)">Select</button></td>
+				    </tr>
+				  </table>
+<input type="text" id="myInput" class="form-control" style="width:400px;" onkeyup="filter()" placeholder="Search for datasets">
+                   -->
+                   <input value="" style="box-shadow:inset 0 0 4px #eee; width:220px; margin:0; padding:6px 12px; border-radius:4px; border:1px solid silver; font-size:1.1em;" id="demo_q" placeholder="Search" type="text">
+                   
+                   
+                   
+                </div>
+                
+                <div class="ibox-content">
+		
+                    <div id="using_json"></div>
+
+                </div>
+            </div>
+        </div>
+
+        		  <div class="col-lg-9">
+        		  <div class="ibox float-e-margins">
+        		   <div class="ibox-content">
+              
+              <div class="checkbox checkbox-primary checkbox-inline">
+                <input type="checkbox" id="checkbox1" onclick="getMovAvg(this)" />
+                <label for="checkbox1">Moving Avg</label>
+              </div>
+              <div class="checkbox checkbox-primary checkbox-inline">
+                <input type="checkbox" id="checkbox2" onclick="getValue()" />
+                <label for="checkbox2">Sum</label>
+              </div>
+                            <div class="checkbox checkbox-primary checkbox-inline">
+                <input type="checkbox" id="checkbox3" onclick="getMin()" />
+                <label for="checkbox3">Min</label>
+              </div>
+                            <div class="checkbox checkbox-primary checkbox-inline">
+                <input type="checkbox" id="checkbox4" onclick="getMax(this)" />
+                <label for="checkbox4">Max</label>
+              </div>
+            
+                &nbsp;&nbsp;&nbsp;<input type="checkbox" class="js-switch js-check-change" nochecked />
+               <button onclick="findPattern()">Find Pattern</button>
+                
+             
+            </div>
+            </div>
+        		  
+     				<div id="container" style="min-width: 310px; max-width:1600px; height: 410px; max-height:1210px; margin: 0 auto"></div>
+        		</div>
+        		
+        
+    </div>
+
+
+<form id="selectionPoints" name="selectionPoints">
+ <input type="hidden" id="xmin" name="xmin" value="" />
+ <input type="hidden" id="xmax" name="xmax" value="" />
+</form>
+
+</div>
+<div class="footer">
+    <div class="pull-right">
+       
+    </div>
+    <div>
+      
+    </div>
+</div>
+
+</div>
+</div>
+
+
+<!-- Mainly scripts -->
+<script src="theme1/js/jquery-3.1.1.min.js"></script>
+<script src="theme1/js/bootstrap.min.js"></script>
+<script src="theme1/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="theme1/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="theme1/js/inspinia.js"></script>
+<script src="theme1/js/plugins/pace/pace.min.js"></script>
+
+
+
+<script src="theme1/js/plugins/jsTree/jstree.min.js"></script>
+
+<script src="theme1/js/highcharts/highcharts.js"></script>
+<script src="theme1/js/highcharts/heatmap.js"></script>
+<script src="theme1/js/highcharts/exporting.js"></script>
+<!-- <script src="theme1/js/highcharts/highstock.js"></script> -->
+<script src="theme1/js/highcharts/highcharts-more.js"></script>
+
+
+   <!-- Switchery -->
+   <script src="theme1/js/plugins/switchery/switchery.js"></script>
+   
+   <script src="theme1/js/jquery-ui-1.12.1/jquery-ui.js"></script>
+
+<script>
+
+var zoom = true;
+
+$(document).ready(function () {
+var elem = document.querySelector('.js-switch');
+elem.checked=false;
+var switchery = new Switchery(elem, { color: '#1AB394' });
+
+var changeCheckbox = document.querySelector('.js-check-change')
+
+changeCheckbox.onchange = function() {
+	if (zoom) {
+		zoom = false;
+	}
+	else {
+		zoom = true;
+		
+		rectangle.attr({
+	        x: 0,
+	        y: 0,
+	        width: 0,
+	        height: 0
+	    });
+		
+	}
+};
+
+
+});
+
+
+
+</script>
+
+ 
+
+
+<style>
+    .jstree-open > .jstree-anchor > .fa-folder:before {
+        content: "\f07c";
+    }
+
+    .jstree-default .jstree-icon.none {
+        width: 0;
+    }
+</style>
+
+<script>
+    $(document).ready(function(){
+
+        $('#jstree1').jstree({
+            'core' : {
+                'check_callback' : true
+            },
+            'plugins' : [ 'types', 'dnd' ],
+            'types' : {
+                'default' : {
+                    'icon' : 'fa fa-folder'
+                },
+                'html' : {
+                    'icon' : 'fa fa-file-code-o'
+                },
+                'svg' : {
+                    'icon' : 'fa fa-file-picture-o'
+                },
+                'css' : {
+                    'icon' : 'fa fa-file-code-o'
+                },
+                'img' : {
+                    'icon' : 'fa fa-file-image-o'
+                },
+                'js' : {
+                    'icon' : 'fa fa-file-text-o'
+                }
+
+            }
+        });
+
+       /* $('#using_json').jstree({
+            'core' : {
+            'data' : [
+                'Empty Folder',
+                {
+                    'text': 'Resources',
+                    'state': {
+                        'opened': true
+                    },
+                    'children': [
+                        {
+                            'text': 'css',
+                            'children': [
+                                {
+                                    'text': 'animate.css', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'bootstrap.css', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'main.css', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'style.css', 'icon': 'none'
+                                }
+                            ],
+                            'state': {
+                                'opened': true
+                            }
+                        },
+                        {
+                            'text': 'js',
+                            'children': [
+                                {
+                                    'text': 'bootstrap.js', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'inspinia.min.js', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'jquery.min.js', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'jsTree.min.js', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'custom.min.js', 'icon': 'none'
+                                }
+                            ],
+                            'state': {
+                                'opened': true
+                            }
+                        },
+                        {
+                            'text': 'html',
+                            'children': [
+                                {
+                                    'text': 'layout.html', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'navigation.html', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'navbar.html', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'footer.html', 'icon': 'none'
+                                },
+                                {
+                                    'text': 'sidebar.html', 'icon': 'none'
+                                }
+                            ],
+                            'state': {
+                                'opened': true
+                            }
+                        }
+                    ]
+                },
+                'Fonts',
+                'Images',
+                'Scripts',
+                'Templates',
+            ]
+        } });
+*/
+    });
+</script>
+
+<script>
+					
+						
+$(function () {
+	var to = false;
+	$('#demo_q').keyup(function () {
+		if(to) { clearTimeout(to); }
+		to = setTimeout(function () {
+			var v = $('#demo_q').val();
+			$('#using_json').jstree(true).search(v);
+		}, 250);
+	});
+});
+
+					
+						
+</script>
+
+<script>
+
+var series; 
+var xAxisLabels;
+
+var tree1;
+$.get("/getfiletree", function(tree) {
+
+	tree1 = tree;
+	console.log(tree);
+	
+	//tree1.core = { label: "Hello", url: "#hello" };
+	$.extend(tree, {
+		'plugins' : [ 'types', 'dnd', 'search' ],
+        'types' : {
+            'default' : {
+                'icon' : 'fa fa-folder'
+            },
+            'html' : {
+                'icon' : 'fa fa-file-code-o'
+            },
+            'svg' : {
+                'icon' : 'fa fa-file-picture-o'
+            },
+            'css' : {
+                'icon' : 'fa fa-file-code-o'
+            },
+            'img' : {
+                'icon' : 'fa fa-file-image-o'
+            },
+            'js' : {
+                'icon' : 'fa fa-file-text-o'
+            }
+        }
+	});
+	
+	$('#using_json').on("select_node.jstree", function (e, data) { 
+				console.log("node: " + data.node.text);
+				getTs(data.node.text, "2017-04-23_00:00:00", "2017-05-03_00:00:00", "sum", "minute");
+				
+	}); 
+	
+	 $('#using_json').jstree(tree);
+});
+
+
+var tagsG;
+var sdateG;
+var edateG;
+var granG;
+var funcG;
+
+function getTs(tags, sdate, edate, func, gran) {
+
+	tagsG = tags;
+	sdateG = sdate;
+	edateG = edate;
+	funcG = func;
+	granG = gran;
+	
+$.get("/getts?tags="+tags+"&sdate="+sdate+"&edate="+edate+"&function="+func+"&granularity="+gran , function(tsData) {
+	//stream2.series[0].setData(stream.baseline,true);
+	console.log(tsData);
+	stream2.series[0].setData(tsData,true);
+	stream2.setTitle(tags, null, true);
+	stream2.setTitle({ text: tags });
+	//xAxisLabels = tsData.times;
+	//stream2.xAxis[0].categories = tsData.times;
+	//stream2.xAxis[0].setCategories(tsData.dateTime);
+	//stream2.xAxis[0].setData(tsData.times, true);
+	});
+}
+
+</script>
+
+
+<script>
+/*
+function filter() {
+    // Declare variables
+    var input, filter, ul, li, a, i;
+    input = document.getElementById('myInput');
+    filter = input.value.toUpperCase();
+    ul = document.getElementById("using_json");
+    li = ul.getElementsByTagName('li');
+
+    // Loop through all list items, and hide those who don't match the search query
+    for (i = 0; i < li.length; i++) {
+    	
+    	//document.getElementById("using_json").getElementsByTagName('li')[1].getElementsByTagName("a")[0].
+        a = li[i].getElementsByTagName("a")[0]; //.innerHTML; //"a" innerHTML
+        //console.log(a.innerHTML.toUpperCase());
+        //var elem = a.getElementsByTagName("i")[0];
+        
+		//elem.parentNode.removeChild(elem);
+        //var pattern = new RegExp('('+filter+')(?![^<]*>)', 'gi');
+        
+        if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
+        	console.log(li[i]);
+            li[i].style.display = "";
+        } else {
+            li[i].style.display = "none";
+        }
+    }
+}*/
+</script>
+
+
+<script type="text/javascript">
+
+function getMovAvg(elem) {
+	
+	console.log(elem.checked);
+	if (elem.checked == true) {
+		$.get("/getmovavg", function(tsData) {
+			console.log(tsData);
+			stream2.series[1].setData(tsData,true);	
+		});
+	}
+	else {
+		//elem.checked = false;
+		stream2.series[1].setData([], true);
+	}
+}
+
+
+function getMax(elem) {
+	
+	console.log(elem.checked);
+	if (elem.checked == true) {
+	
+	$.get("/getmax", function(tsData) {
+		console.log(tsData);
+		stream2.series[2].setData(tsData,true);	
+		
+		});
+	}
+	else {
+		stream2.series[2].setData([], true);
+	}
+}
+
+function getMin() {
+	$.get("/getmin", function(tsData) {
+		console.log(tsData);
+		stream2.series[3].setData(tsData,true);	
+		
+		});
+}
+
+function getValue() {
+	$.get("/getvalue", function(tsData) {
+		console.log(tsData);
+		stream2.series[4].setData(tsData,true);	
+		
+		});
+}
+
+var f;
+
+
+
+var stream2 = Highcharts.chart('container',{
+		chart: {
+		    zoomType:'x',
+			//renderTo: 'stream2',
+	        type: 'areaspline',
+	        events: {
+	                selection: grabPoints 
+	        }
+	            
+	        },        
+	        
+	        exporting : {
+						enabled : false
+			},
+	        title: {
+	            text: ''
+	        },
+	        legend: {
+	        	
+	      	       enabled: false
+	            
+	        },
+	        xAxis: {
+	        	type: 'datetime',
+	            categories: xAxisLabels 
+	          
+	        },
+	        yAxis: {
+	            title: {
+	                text: ''//'Precision'
+	            },
+	            gridLineWidth: 0,
+	  					minorGridLineWidth: 0,
+	               labels: {
+	       enabled: false
+	   },
+	        },
+
+	        credits: {
+	            enabled: false
+	        },
+	        plotOptions: {
+	            areaspline: {
+	                fillOpacity: 0.2
+	            },
+	            line: {
+	                    marker: {
+	                        enabled: false
+	                    }
+	                }
+	        },
+	        series: [
+			{
+	            name: 'Sum',
+	            color:'#25B799',// '#5EC3B5', //color: '#1CA8DD',
+	            data: [4, 3, 5, 3, 4, 5, 3] ,//series, //[4, 3, 5, 3, 4, 5, 3],
+	            lineWidth:2
+	        },
+            {
+	            name: 'Mov Avg',
+	           // data: [5, 4, 4, 4, 3, 4, 4],
+	            color: '#ccc',
+	            type: 'line',
+	            opacity:0.2,
+	            lineWidth:2
+	            //dashStyle:'dash'
+	        	
+	        },
+	           {
+	            name: 'Max',
+	           // data: [5, 4, 4, 4, 3, 4, 4],
+	            color: '#ccc',
+	            type: 'line',
+	            opacity:0.2,
+	            lineWidth:2
+	            //dashStyle:'dash'
+	        	
+	        },
+	           {
+	            name: 'Min',
+	           // data: [5, 4, 4, 4, 3, 4, 4],
+	            color: '#ccc',
+	            type: 'line',
+	            opacity:0.2,
+	            lineWidth:2
+	            //dashStyle:'dash'
+	        	
+	        },
+	           {
+	            name: 'Value',
+	            //data: [5, 4, 4, 4, 3, 4, 4],
+	            color: '#ccc',
+	            type: 'line',
+	            opacity:0.2,
+	            lineWidth:2
+	            //dashStyle:'dash'
+	        	
+	        }
+			]
+	    });
+	    
+rectangle = stream2.renderer.rect(0,0,0,0,0).css({
+    stroke: '#2F4050',
+    strokeWidth: '.5',
+    fill: '#2F4050',
+    fillOpacity: '.1'
+}).add();
+
+
+
+var gg;
+
+var xMinSelection;
+var xMaxSelection;
+
+function grabPoints(event) {
+	
+	gg = event;
+	
+	if (!zoom) {
+	
+    var xMin = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).min),
+        xMax = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).max),
+        yMin = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).min),
+        yMax = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).max);
+
+	    document.getElementById("xmin").value = xMin;
+	    document.getElementById("xmax").value = xMax;
+	    //document.getElementById("ymin").value = yMin;
+	    //document.getElementById("ymax").value = yMax;
+	    console.log(event.xAxis[0].min);
+	    console.log(event.xAxis[0].max);
+	    xMinSelection = event.xAxis[0].min;
+	    xMaxSelection = event.xAxis[0].max;
+	    
+	   // console.log(event.yAxis[0]);
+	   // console.log(yMin);
+	   // console.log(xMin);
+	   // console.log(stream2.options.plotOptions)
+	    
+    
+    rectangle.attr({
+        x: xMin + stream2.plotLeft,
+        y: stream2.plotHeight + stream2.plotTop - yMax,
+        width: xMax - xMin,
+        height: yMax - yMin
+    });
+    
+    return false;
+	}
+	
+	else {
+		return true;
+	}
+	
+}
+
+
+function findPattern() {
+	
+	
+  $.get("/findpattern?tags="+tagsG+"&sdate="+sdateG+"&edate="+edateG+"&function="+funcG+"&granularity="+granG+"&psdate="+xMinSelection+"&pedate="+xMaxSelection, function(rs) {
+	
+	
+	console.log(rs);
+	});
+}
+
+
+
+function chartSelection() {
+	if (zoom) {
+		zoom = false;
+	}
+	else {
+		zoom = true;
+		
+		rectangle.attr({
+	        x: 0,
+	        y: 0,
+	        width: 0,
+	        height: 0
+	    });
+		
+	}
+	/*
+	
+	(function (H) {
+	    Highcharts.Chart.prototype.callbacks.push(function (chart) {
+	      
+	    	f=chart;
+	    	/*H.addEvent(chart.container, 'click', function (e) {
+	            e = chart.pointer.normalize();
+	           alert('Clicked chart at ' + e.chartX + ', ' + e.chartY);
+	        });
+	        H.addEvent(chart.xAxis[0], 'afterSetExtremes', function (e) {
+	            alert('Set extremes to ' + e.min.toFixed(2) + ', ' + e.max.toFixed(2));
+	        });
+	        
+	        
+	        H.addEvent(chart, 'selection', function(event) {
+	        	 //alert("here");
+	            var xMin = chart.xAxis[0].translate((event.xAxis[0]||chart.xAxis[0]).min),
+	                xMax = chart.xAxis[0].translate((event.xAxis[0]||chart.xAxis[0]).max),
+	                yMin = chart.yAxis[0].translate((event.yAxis[0]||chart.yAxis[0]).min),
+	                yMax = chart.yAxis[0].translate((event.yAxis[0]||chart.yAxis[0]).max);
+
+	            rectangle.attr({
+	                x: xMin + chart.plotLeft,
+	                y: chart.plotHeight + chart.plotTop - yMax,
+	                width: xMax - xMin,
+	                height: yMax - yMin
+	            });
+	           
+	            return false;
+	        });
+	        
+	       
+	        
+	        
+	    });
+	}(Highcharts));
+
+	*/
+	
+	
+	
+	//stream2.options.chart.events.selection = selector;
+	
+	
+	/*eventcode = "{ selection: function(event) { var xMin = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).min), xMax = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).max), yMin = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).min),y Max = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).max); rectangle.attr({" 
+		+ " x: xMin + stream2.plotLeft,  y: stream2.plotHeight + stream2.plotTop - yMax, width: xMax - xMin, height: yMax - yMin }); return false; } }";
+		*/
+		/*
+		 Highcharts.addEvent(stream2.options.chart, 'selection', function(event) {
+			    var xMin = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).min),
+		        xMax = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).max),
+		        yMin = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).min),
+		        yMax = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).max);
+
+		    rectangle.attr({
+		        x: xMin + stream2.plotLeft,
+		        y: stream2.plotHeight + stream2.plotTop - yMax,
+		        width: xMax - xMin,
+		        height: yMax - yMin
+		    });
+		    
+		    return false;
+		});
+		console.log("here");
+		stream2.redraw();
+		*/
+		/*
+		stream2.bind('selection', function(event) {
+            var xMin = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).min),
+            xMax = stream2.xAxis[0].translate((event.xAxis[0]||stream2.xAxis[0]).max),
+            yMin = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).min),
+            yMax = stream2.yAxis[0].translate((event.yAxis[0]||stream2.yAxis[0]).max);
+
+        rectangle.attr({
+            x: xMin + stream2.plotLeft,
+            y: stream2.plotHeight + stream2.plotTop - yMax,
+            width: xMax - xMin,
+            height: yMax - yMin
+        });
+        
+        return false;
+    });*/
+}
+
+</script>
+
+
+<script type="text/javascript">
+
+$( "#autocomplete" ).autocomplete({
+	minLength: 2,
+    source: "/search"
+    //focus: function( event, ui ) {
+     // $( "#project" ).val( ui.item.label );
+     // return false;
+});
+
+</script>
+
+
+</body>
+
+</html>
