@@ -49,7 +49,7 @@ public abstract class Atlas {
 	private static String ambariAdminUser = "admin";
 	private static String ambariAdminPassword = "admin";
 	
-	private static String dps_host = "";
+	private static String dpsHost = "";
 	private static String dps_url = "";
 	private static String dps_auth_uri = "/auth/in";
 	private static String dps_clusters_uri = "/api/actions/clusters?type=all";
@@ -77,11 +77,11 @@ public abstract class Atlas {
         if(env.get("ATLAS_PORT") != null){
         	atlasPort = (String)env.get("ATLAS_PORT");
         }
-        if(env.get("DATAPLANE_HOST") != null){
-        	dps_host = (String)env.get("DATAPLANE_HOST");
+        if(env.get("DPS_HOST") != null){
+        	dpsHost = (String)env.get("DPS_HOST");
         }
         server = "http://"+atlasHost+":"+atlasPort;
-        dps_url = "https://"+dps_host;
+        dps_url = "https://"+dpsHost;
 		atlasFileTree = getFileTree();
 		//setCache();
 	}
@@ -118,8 +118,7 @@ public abstract class Atlas {
        	
     	RestTemplate restTemplate = new RestTemplate();
     	
-    	restTemplate.getInterceptors().add(
-    			  new BasicAuthorizationInterceptor("admin", "admin"));  	
+    	restTemplate.getInterceptors().add(new BasicAuthorizationInterceptor("admin", "admin"));  	
 
     	//data = callAtlas(server+api+"/v1/taxonomies/", restTemplate, data);    	
     	
@@ -147,8 +146,11 @@ public abstract class Atlas {
 			List<Object> assetList = new ArrayList<Object>();
 			String collectionId = collections.getJSONObject(i).getJSONObject("dataset").getString("id");
 			String collectionName = collections.getJSONObject(i).getJSONObject("dataset").getString("name");
+			String collectionClusterId = collections.getJSONObject(i).getString("cluster");
+			
 			collectionMap.put("id", collectionId);
 			collectionMap.put("text", collectionName);
+			collectionMap.put("clusterId", collectionClusterId);
 		
 			LOG.info("++++++++++++++ Collection: " + collectionName);
 			JSONArray assets = httpGetArray(dps_url+dss_assets_uri + "/" + collectionId + "/assets?queryName&offset=0&limit=100", token);
@@ -157,9 +159,11 @@ public abstract class Atlas {
 				JSONObject assetJSON = assets.getJSONObject(j);
 				String assetId = assetJSON.getString("id");
 				String assetName = assetJSON.getString("assetName");
+				String assetFQN = assetJSON.getJSONObject("assetProperties").getString("qualifiedName");
 				String assetGuid = assetJSON.getString("guid");
-				asset.put("id", assetGuid);
+				asset.put("id", assetFQN);
 				asset.put("text", assetName);
+				asset.put("clusterId", collectionClusterId);
 				LOG.info("+++++++++++++ AssetId: " + assetId + " AssetName: " + assetName + " GUID: " + assetGuid);
 				assetList.add(asset);
 			}

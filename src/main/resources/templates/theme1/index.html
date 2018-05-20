@@ -180,6 +180,7 @@
                      						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="platform" onChange="populateOptions()" required>
                         						<option value="connected-platform" selected="selected">Select Target Cloud</option>
                         						<option value="AWS">AWS</option>
+    											<option value="GCP">GCP</option>
     											<option value="OPENSTACK">OPENSTACK</option>
                      						</select>
                   						</div>
@@ -195,6 +196,8 @@
                      							<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="cluster_type" required disabled>
                         							<option value="connected-platform" selected="selected">Connected Platform</option>
                         							<option value="historian">Historian</option>
+                        							<option value="managed-cluster">DPS Managed Cluster</option>
+                        							<option value="shared-services">Shared Services</option>
                      							</select>
                   							</div>
                   						</div>	
@@ -232,16 +235,29 @@
                      						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_platform" onChange="populateEphemeralClusterOptions()" required>
                         						<option value="" selected="selected">Select Target Cloud</option>
                         						<option value="AWS">AWS</option>
+                        						<option value="GCP">GCP</option>
     											<option value="OPENSTACK">OPENSTACK</option>
                      						</select>
                   						</div>
                 					</div>
                 					<div class="form-group required" id="ephemeral_general_info_body">
-                  						<label class="col-sm-3 control-label" for="clusterName">Target Bucket</label>
+                  						<label class="col-sm-3 control-label" for="targetBucket">Target Bucket</label>
                   						<div class="col-sm-9">
                      						<input type="text" id="ephemeral_target_bucket" name="targetBucket" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
                   						</div>
-                  					</div>	
+                  					</div>
+                  				<div class="form-group required" id="ephemeral_general_info_body">
+                  						<label class="col-sm-3 control-label" for="replicationSourceClusterId">Replication Source Name</label>
+                  						<div class="col-sm-9">
+                     						<input type="text" id="ephemeral_replication_source_clusterId" name="replicationSourceClusterId" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  						</div>
+                  					</div>
+                  				<div class="form-group required" id="ephemeral_general_info_body">
+                  						<label class="col-sm-3 control-label" for="replicationSourceDatasetName">Replication Dataset Name</label>
+                  						<div class="col-sm-9">
+                     						<input type="text" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  						</div>
+                  					</div>			
     								<div class="form-group required" id="ephemeral_general_info_body">
                   						<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
                   						<div class="col-sm-9">
@@ -252,7 +268,8 @@
 										<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
                   						<div class="col-sm-9">
                      						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_cluster_type" required disabled>
-                        						<option value="shared-services" selected="selected">Ephemeral</option>
+                        						<option value="semi-ephemeral">Semi-Ephemeral</option>
+                        						<option value="ephemeral" selected="selected">Ephemeral</option>
                      						</select>
                   						</div>
                   					</div>
@@ -320,7 +337,7 @@ function displayWizard() {
 		form.style.display = 'none'
 }
 
-function displayEphemeralWizard(targetBucket) {
+function displayEphemeralWizard(targetBucket, replicationSourceClusterId, replicationSourceDatasetName) {
 	var form = document.getElementById('ephemeral_form_container')
 	
 	if (form.style.display == 'none')
@@ -329,6 +346,8 @@ function displayEphemeralWizard(targetBucket) {
 		form.style.display = 'none'
 	
 	document.getElementById('ephemeral_target_bucket').value = targetBucket
+	document.getElementById('ephemeral_replication_source_clusterId').value = replicationSourceClusterId
+	document.getElementById('ephemeral_replication_source_dataset_name').value = replicationSourceDatasetName	
 }
 
 function exploreAtlas() {
@@ -357,7 +376,7 @@ function refreshCatalog(){
 	getFileTree()
 }
 
-function displayEntity(entityName) {
+function displayEntity(entityName, sourceClusterId) {
 	var form = document.getElementById('atlas_viewer_container')
 	
 	if (form.style.display == 'none')
@@ -380,7 +399,9 @@ function displayEntity(entityName) {
 	    tableLocation = data.sd.location
 		lastAccess = data.lastAccessTime
 		targetBucket = tableLocation.replace('/'+name, '')
-		
+		console.log(qualifiedName.split('.'))
+		sourceDatasetName = qualifiedName.split('.')[0]
+		console.log(sourceDatasetName)
 		atlasViewerHtml = '<div>'+
 		'<b>Name:</b> ' +name+'<br>'+
 		'<b>qualifiedName:</b> '+qualifiedName+'<br>'+
@@ -392,7 +413,18 @@ function displayEntity(entityName) {
 		for (var i = 0; i < data.columns.length; i++) {
 			atlasViewerHtml = atlasViewerHtml+'<tr><td>'+data.columns[i].name+'</td><td>'+data.columns[i].type+'</td></tr>'
 		}
-		atlasViewerHtml = atlasViewerHtml+'</table></div><div style="float: right;"><button onclick="displayEphemeralWizard(\''+targetBucket+'\')" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">Access Dataset</button></div>'
+		atlasViewerHtml = atlasViewerHtml+'</table>'
+										 + '</div>'
+										 + '<div style="float: right;">'
+										 + '		<button onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\')" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
+										 + '			Provision Temp Workspace'
+										 + '		</button>'
+										 + '</div>'
+										 + '<div style="float: right;">'
+										 + '		<button onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\')" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
+										 + '			Access Dataset'
+										 + '		</button>'
+										 + '</div>'
 		document.getElementById('atlas_viewer').innerHTML = atlasViewerHtml;
 	});
 }
@@ -436,7 +468,7 @@ function populateOptions() {
 			    console.log(key + " -> " + credentials[key]);
 			    option = document.createElement('option')
 			    option.text = key;
-			    option.value = credentials[key];
+			    option.value = key;
 			    document.getElementById('credentials').add(option)
 			}
 		}
@@ -467,11 +499,19 @@ function populateEphemeralClusterOptions() {
 		
 		clearSelect(document.getElementById('ephemeral_cluster_type'))
 		var templates = data.templates
-		option = document.createElement('option')
-		option.text = 'Ephemeral'
-		option.value = 'shared-services'
-		document.getElementById('ephemeral_cluster_type').add(option)
-		option.selected = true
+		if(document.getElementById('ephemeral_replication_source_clusterId').value == null || document.getElementById('ephemeral_replication_source_dataset_name').value == null){
+			option = document.createElement('option')
+			option.text = 'Ephemeral'
+			option.value = 'ephemeral'
+			document.getElementById('ephemeral_cluster_type').add(option)
+			option.selected = true
+		}else{
+			option = document.createElement('option')
+			option.text = 'Semi-Ephemeral'
+			option.value = 'semi-ephemeral'
+			document.getElementById('ephemeral_cluster_type').add(option)
+			option.selected = true
+		}
 		
 		clearSelect(document.getElementById('ephemeral_templates'))
 		var templates = data.templates
@@ -492,7 +532,7 @@ function populateEphemeralClusterOptions() {
 			    console.log(key + " -> " + credentials[key]);
 			    option = document.createElement('option')
 			    option.text = key;
-			    option.value = credentials[key];
+			    option.value = key;
 			    document.getElementById('ephemeral_credentials').add(option)
 			}
 		}
@@ -538,6 +578,8 @@ function createCluster(isEphemeral){
 		var templateName = document.getElementById("ephemeral_templates").options[document.getElementById("ephemeral_templates").selectedIndex].text
 		var credentialId = document.getElementById("ephemeral_credentials").value;
 		var targetBucket = document.getElementById("ephemeral_target_bucket").value;
+		var sourceClusterId = document.getElementById("ephemeral_replication_source_clusterId").value;
+		var sourceDatasetName = document.getElementById("ephemeral_replication_source_dataset_name").value;
 		var sharedServicesIp = "place_holder";
 	}else{
 		var clusterName = document.getElementById("cluster_name").value;
@@ -548,12 +590,15 @@ function createCluster(isEphemeral){
 		var templateName = document.getElementById("templates").options[document.getElementById("templates").selectedIndex].text
 		var credentialId = document.getElementById("credentials").value;
 		var targetBucket = null;
+		var sourceClusterId = null;
+		var sourceDatasetName = null;
 		var sharedServicesIp = null;
 	}
 		
 	var ambariServerIp = "PENDING"
 	
-	var url = "/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesIp="+encodeURIComponent(sharedServicesIp)+"&targetBucket="+encodeURIComponent(targetBucket);
+	console.log("/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesIp="+encodeURIComponent(sharedServicesIp)+"&targetBucket="+encodeURIComponent(targetBucket)+"&sourceClusterId="+encodeURIComponent(sourceClusterId)+"&sourceDatasetName="+encodeURIComponent(sourceDatasetName));
+	var url = "/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesIp="+encodeURIComponent(sharedServicesIp)+"&targetBucket="+encodeURIComponent(targetBucket)+"&sourceClusterId="+encodeURIComponent(sourceClusterId)+"&sourceDatasetName="+encodeURIComponent(sourceDatasetName);
 	
 	if(isEphemeral || isClusterNameValid()){
 		console.log(url);
@@ -760,12 +805,13 @@ $.get("/getfiletree", function(tree) {
 		console.log(e);
 		console.log(data);
 		console.log("node: " + data.node.text);
+		entityFQN = data.node.id;
 		entityName = data.node.text;
+		sourceClusterId = data.node.id.split('@')[1];
 		
-		displayEntity(entityName)
+		displayEntity(entityFQN, sourceClusterId)
 		//var elem =document.getElementById('checkbox0');
 		//getTsFunction(elem, 0, "sum"); //  "2017-04-23_00:00:00", "2017-05-03_00:00:00", "sum", "minute");
-				
 	}); 
 	
 	 $('#using_json').jstree(tree);

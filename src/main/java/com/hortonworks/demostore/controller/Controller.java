@@ -65,6 +65,7 @@ public class Controller{
 	private String atlasApiHost;
 	private String atlasApiPort;
 	private String atlasUrl;
+	private String dpsHost;
 	private String sharedServicesAmabriHost;
 	private String cloudbreakAuthHost;
 	private String cloudbreakAuthPort;
@@ -103,25 +104,28 @@ public class Controller{
 		}		
 	
 		if(env.get("API_HOST") != null){
-        	cloudbreakApiHost = (String)env.get("API_HOST");
+			cloudbreakApiHost = (String)env.get("API_HOST");
         }
         if(env.get("API_PORT") != null){
-        	cloudbreakApiPort = (String)env.get("API_PORT");
+        		cloudbreakApiPort = (String)env.get("API_PORT");
         }
         if(env.get("AUTH_HOST") != null){
-        	cloudbreakAuthHost = (String)env.get("AUTH_HOST");
+        		cloudbreakAuthHost = (String)env.get("AUTH_HOST");
         }
         if(env.get("AUTH_PORT") != null){
-        	cloudbreakAuthPort = (String)env.get("AUTH_PORT");
+        		cloudbreakAuthPort = (String)env.get("AUTH_PORT");
         }
         if(env.get("ATLAS_HOST") != null){
-        	atlasApiHost = (String)env.get("ATLAS_HOST");
+        		atlasApiHost = (String)env.get("ATLAS_HOST");
         }
         if(env.get("ATLAS_PORT") != null){
-        	atlasApiPort = (String)env.get("ATLAS_PORT");
+        		atlasApiPort = (String)env.get("ATLAS_PORT");
         }
         if(env.get("SHARED_SERVICES_AMBARI_HOST") != null){
-        	sharedServicesAmabriHost = (String)env.get("SHARED_SERVICES_AMBARI_HOST");
+        		sharedServicesAmabriHost = (String)env.get("SHARED_SERVICES_AMBARI_HOST");
+        }
+        if(env.get("DPS_HOST") != null){
+        		dpsHost = (String)env.get("DPS_HOST");
         }
         
         atlasUrl = "http://"+atlasApiHost+":"+atlasApiPort;
@@ -172,18 +176,20 @@ public class Controller{
 	
 	@RequestMapping(value="/refreshArtifacts", method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE})
     public void getAllArtifacts() {
-		 String[] platforms = {"AWS","OPENSTACK"};
-	        
+		 String[] platforms = {"AWS","OPENSTACK","GCP","AZURE"};
+		 HashMap<String,Object> platformComponents = new HashMap<String, Object>();
+		 
 		 for (String platform : platforms){
-			HashMap<String,Object> platformComponents = new HashMap<String, Object>();
+			platformComponents = new HashMap<String, Object>();
 			platformComponents.put("credentials", getCredentials(platform));
 	        platformComponents.put("templates", getTemplates(platform));
-	        platformComponents.put("securityGroups", getSecurityGroups(platform));
-	        platformComponents.put("networks", getNetworks(platform));
-	        platformComponents.put("blueprints", getBlueprints());
-	        platformComponents.put("recipes", getRecipes());
+	        //platformComponents.put("securityGroups", getSecurityGroups(platform));
+	        //platformComponents.put("networks", getNetworks(platform));
 	        platformMetaData.put(platform, platformComponents);
 		 }
+		 
+		 //platformComponents.put("blueprints", getBlueprints());
+	     platformComponents.put("recipes", getRecipes());
     }
 	
 	@RequestMapping(value="/refreshAllClusters", method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE})
@@ -355,7 +361,7 @@ public class Controller{
 			//System.out.println(atlasClient2.getEntity("49927a0a-22e2-41b9-af34-6d92099799d2"));
 			//JSONObject entity = new JSONObject(InstanceSerialization._toJson(atlasClient2.getEntity(entityName),true));
 			//JSONArray entitiesArray = atlasClient2.searchByDSL("hive_table where qualifiedName = 'warehouse."+entityName.replace("'", "")+"@sharedservices'", -1, 0);
-			JSONArray entitiesArray = atlasClient2.searchByDSL("hive_table where name = "+entityName, -1, 0);
+			JSONArray entitiesArray = atlasClient2.searchByDSL("hive_table where qualifiedName = "+entityName, -1, 0);
 			System.out.println(entitiesArray);
 			//entities = mapper.readValue(entity.toString(), HashMap.class);
 			entities = mapper.readValue(entitiesArray.get(0).toString(), HashMap.class);
@@ -385,12 +391,25 @@ public class Controller{
     	String shared_services_name="none";
     	
     	JSONArray blueprintsJSON = httpGetArray(urlString);
+    	System.out.println(blueprintsJSON);
     	for(int i=0;i<blueprintsJSON.length();i++){
-			try {
-				JSONObject blueprint = blueprintsJSON.getJSONObject(i); 
-	    		String[] blueprint_name = blueprint.getString("name").split("_v");
+    		try {
+			JSONObject blueprint = blueprintsJSON.getJSONObject(i); 
+			String[] blueprint_name = new String[2];
+			System.out.println(blueprint.getString("name"));
+			if(blueprint.getString("name").contains("_v")) {
+				 blueprint_name = blueprint.getString("name").split("_v");
+			}else if(blueprint.getString("name").contains("-v")) {
+				blueprint_name = blueprint.getString("name").split("-v");
+			}else if(blueprint.getString("name").contains("-V")) {
+				blueprint_name = blueprint.getString("name").split("-V");
+			}else if(blueprint.getString("name").contains("_V")) {
+				blueprint_name = blueprint.getString("name").split("_V");
+			}else {
+				blueprint_name[0] = blueprint.getString("name");
+			}
     			System.out.println("**********");
-    			System.out.println(blueprint);
+    			System.out.println(blueprint.getString("name"));
     			System.out.println("**********");
     			if(blueprint_name[0].equalsIgnoreCase("hdp-hdf-multi-node") && blueprint_name.length > 1){
     				if (hdp_hdf_version==0 || hdp_hdf_version < Double.valueOf(blueprint_name[1])){
@@ -413,7 +432,7 @@ public class Controller{
     			        shared_services_version = Double.valueOf(blueprint_name[1]);
     			        shared_services_name = blueprint.getString("name");
     			        System.out.println(shared_services_name);
-  			        	blueprints.put(blueprint_name[0],blueprint.getInt("id"));
+  			        	blueprints.put(blueprint.getString("name"),blueprint.getInt("id"));
     			        //blueprints.put(shared_services_name,blueprint.getInt("id"));
     				}    		
     			}
@@ -422,7 +441,7 @@ public class Controller{
 			}
     	}
     	
-    	System.out.println(blueprints);
+    System.out.println(blueprints);
     	return blueprints;
     }
     
@@ -435,41 +454,91 @@ public class Controller{
     		@RequestParam(value="templateId") String templateId, 
     		@RequestParam(value="credentialId") String credentialId,
     		@RequestParam(value="sharedServicesIp") String sharedServicesIp,
-    		@RequestParam(value="targetBucket") String targetBucket) {
+    		@RequestParam(value="targetBucket") String targetBucket,
+    		@RequestParam(value="sourceClusterId") String sourceClusterId,
+    		@RequestParam(value="sourceDatasetName") String sourceDatasetName) {
     	
-    	HashMap<String, Object> responseMap = null;
+    		HashMap<String, Object> responseMap = null;
+    		String urlString = cloudbreakUrl+cloudbreakApiUri+stacksUri;
     	
-    	String urlString = cloudbreakUrl+cloudbreakApiUri+stacksUri;
-    	
-    	String region = null;
-		String zone= null;
-		String variant= null;
+    		String region = null;
+		String zone = null;
+		String variant = null;
+		String stackOs = null;
 		String securityGroupId = null;
+		String vpcId = null;
 		String networkId = null;
+		String subnetId = null;
 		String blueprintId = null;
+		String blueprint = null;
 		String recipeId = null;
-    	
+		String instanceType = null;
+		String volumeType = null;
+		String volumeCount = null;
+		String imageCatalog = "cloudbreak-default";
+		String imageId = null;
+    		String ambariRepoVersion = "2.6.1.3";
+    		String ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.3";
+    		String ambariRepoGpgKey = "http://public-repo-1.hortonworks.com/ambari/centos7/RPM-GPG-KEY/RPM-GPG-KEY-Jenkins";
+    		String hdpPlatformVerson = "HDP 2.6";
+    		String stackMajorVersion = "2.6";
+    		String stackRepoVersion = "2.6.4.5-2"; 
+    		String stackDefUrl = "http://private-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.4.5-2/HDP-2.6.4.5-2.xml";
+    		String recipes = "";
+    		
 		//credentialId = (String) ((HashMap)platformMetaData.get(platform).get("credentials")).get(credential);
 		//templateId = (String) ((HashMap)platformMetaData.get(platform).get("templates")).get(template);
-		
-    	if (platform.equalsIgnoreCase("AWS")){
+    		System.out.println(platform);	
+    		if (platform.equalsIgnoreCase("AWS")){
     		  region="us-east-1";
     		  zone="null";
     		  variant="AWS";
-    		  securityGroupId = (String) ((HashMap)platformMetaData.get(platform).get("securityGroups")).get("aws-connected-platform-all-services-v1");
-    		  networkId = (String) ((HashMap)platformMetaData.get(platform).get("networks")).get("aws-existing-vpc-subnet");
-    	}else if (platform.equalsIgnoreCase("OPENSTACK")){
+    		  stackOs = "centos6";
+    		  //securityGroupId = (String) ((HashMap)platformMetaData.get(platform).get("securityGroups")).get("aws-connected-platform-all-services-v1");
+    		  securityGroupId = "sg-6bb0ac22";
+    		  //networkId = (String) ((HashMap)platformMetaData.get(platform).get("networks")).get("aws-existing-vpc-subnet");
+    		  vpcId = "vpc-d85076bd";
+    		  networkId = null;
+    		  subnetId = "subnet-dff56386";
+    		  imageId = "63cdb3bc-28a6-4cea-67e4-9842fdeeaefb";
+    		  instanceType = "m3.xlarege";
+    		  volumeType = "standard";
+    		  volumeCount = "1";
+    		  recipes = "\"configure-postgres-metastores\",\"install-dps-agents-aws\",\"dps-dlm-register-cluster-aws\",\"dps-dlm-remove-cluster-aws\"";
+    		}else if (platform.equalsIgnoreCase("OPENSTACK")){
     		  region="RegionOne";
-    		  zone="\"SE\"";
+    		  zone="SE";
     		  variant="HEAT";
-    		  securityGroupId = (String) ((HashMap)platformMetaData.get(platform).get("securityGroups")).get("openstack-connected-platform-demo-all-services-port-v2");
-    		  networkId = (String) ((HashMap)platformMetaData.get(platform).get("networks")).get("fieldcloud-openstack-network");
-    	}else{
-    		System.out.println("********************Invalid cloud platform requested...");
-    		System.out.println("********************Valid platform types are: AWS, OPENSTACK");
-    		return null;
-    	}
-    	
+    		  stackOs = "centos7";
+    		  securityGroupId = "de632b11-944c-4acb-a0cd-47f864150d5e";
+    		  vpcId = null;
+    		  networkId = "71a870bb-191c-4abe-bf02-ece2e9b3345c";
+    		  subnetId = "aa7c8bb9-0152-46b9-8596-935baca704a0";
+    		  imageId = "74d99079-f5d0-4470-78b3-11ceaf944069";
+    		  instanceType = "m3.xlarege";
+    		  volumeType = "HDD";
+    		  volumeCount = "0";
+    		  recipes = "\"configure-postgres-metastores\",\"install-dps-agents-aws\",\"dps-dlm-remove-cluster-aws\"";
+    		}else if (platform.equalsIgnoreCase("GCP")){
+  		  region="us-east4";
+  		  zone="us-east4-a";
+  		  variant="GCP";
+  		  stackOs = "centos7";
+  		  securityGroupId = "a-ephemeral-master";
+  		  vpcId = null;
+  		  networkId = "default";
+  		  subnetId = "default";
+  		  imageId = "5a25167d-656a-4621-4755-0e8e6381e4fe";
+  		  instanceType = "n1-standard-4";
+  		  volumeType = "pd-standard";
+  		  volumeCount = "1";
+  		  recipes = "\"configure-postgres-metastores\",\"install-dps-agents-gcp\",\"dps-dlm-remove-cluster-gcp\"";  
+    		}else{
+    			System.out.println("********************Invalid cloud platform requested...");
+    			System.out.println("********************Valid platform types are: AWS, OPENSTACK, GCP");
+    			return null;
+    		}
+    	/*
     	if (type.equalsIgnoreCase("connected-platform")){
     		blueprintId = String.valueOf(((HashMap)platformMetaData.get(platform).get("blueprints")).get("hdp-hdf-multi-node"));
     		recipeId = String.valueOf(((HashMap)platformMetaData.get(platform).get("recipes")).get("canonical-hdf-service-install"));
@@ -484,48 +553,46 @@ public class Controller{
     		System.out.println("********************Invalid cluster type selected ("+type+")...");
     		return null;
     	}
+    	*/
     	
-    	
-    	String stackDef = null;
-    if (type.equalsIgnoreCase("shared-services")){    
+    		String stackDef = null;
     		urlString = cloudbreakUrl+cloudbreakApiUriV2+stacksUri;
+    	
+    		if (type.equalsIgnoreCase("semi-ephemeral")){    	
+    			blueprint = "SHARED-SERVICES-V1.13";
+    			recipeId = createSemiEphemeralRecipe(clusterName, sourceClusterId, sourceDatasetName);
+    			recipes += ",\""+recipeId+"\"";
+    		}else if(type.equalsIgnoreCase("ephemeral")) {
+    			blueprint = "EPHEMERAL-V1.3";
+    			recipeId = createEphemeralRecipe(clusterName, sharedServicesIp, targetBucket, "sharedservices_hive").toString();
+    			recipes += ",\""+recipeId+"\"";
+    		}else if(type.equalsIgnoreCase("managed-cluster")) {
+    			blueprint = "SHARED-SERVICES-V1.13";
+    		}
     		
-    		if(platform.equalsIgnoreCase("OPENSTACK")) {
-    			stackDef = "" +
+    		stackDef = "" +
     				"{\n" + 
-    				"  \"general\": {\n" + 
-    				"    \"credentialName\": \"openstack\",\n" + 
-    				"    \"name\": \""+clusterName+"\"\n" + 
-    				"  },\n" + 
-    				"  \"placement\": {\n" + 
-    				"    \"region\": \"RegionOne\",\n" + 
-    				"    \"availabilityZone\": \"SE\"\n" + 
-    				"  },\n" + 
-    				"  \"tags\": {\n" + 
-    				"    \"userDefinedTags\": {\n" + 
-    				"      \n" + 
-    				"    }\n" + 
-    				"  },\n" + 
+    				"  \"general\": {\"credentialName\": \""+credentialId+"\",\"name\": \""+clusterName+"\"},\n" + 
+    				"  \"placement\": {\"region\": \""+region+"\",\"availabilityZone\": \""+zone+"\"},\n" + 
+    				"  \"tags\": {\"userDefinedTags\": {}},\n" + 
     				"  \"cluster\": {\n" + 
     				"    \"ambari\": {\n" + 
-    				"      \"blueprintName\": \"shared-services\",\n" + 
-    				"      \"platformVersion\": \"HDP 2.6\",\n" + 
+    				"      \"blueprintName\": \""+blueprint+"\",\n" + 
+    				"      \"platformVersion\": \""+hdpPlatformVerson+"\",\n" + 
     				"      \"ambariRepoDetailsJson\": {\n" + 
-    				"        \"version\": \"2.6.1.3\",\n" + 
-    				"        \"baseUrl\": \"http:\\/\\/public-repo-1.hortonworks.com\\/ambari\\/centos7\\/2.x\\/updates\\/2.6.1.3\",\n" + 
-    				"        \"gpgKeyUrl\": \"http:\\/\\/public-repo-1.hortonworks.com\\/ambari\\/centos7\\/RPM-GPG-KEY\\/RPM-GPG-KEY-Jenkins\"\n" + 
+    				"        \"version\": \""+ambariRepoVersion+"\",\n" + 
+    				"        \"baseUrl\": \""+ambariRepoBaseUrl+"\",\n" + 
+    				"        \"gpgKeyUrl\": \""+ambariRepoGpgKey+"\"\n" + 
     				"      },\n" + 
-    				"      \"ambariStackDetails\": {\n" + 
-    				"        \"version\": \"2.6\",\n" + 
+    				"      \"ambariStackDetails\": {\n" +  
     				"        \"verify\": false,\n" + 
     				"        \"enableGplRepo\": false,\n" + 
     				"        \"stack\": \"HDP\",\n" + 
-    				"        \"repositoryVersion\": \"2.6.4.5-2\",\n" + 
-    				"        \"versionDefinitionFileUrl\": \"http:\\/\\/private-repo-1.hortonworks.com\\/HDP\\/centos7\\/2.x\\/updates\\/2.6.4.5-2\\/HDP-2.6.4.5-2.xml\",\n" + 
-    				"        \"stackOs\": \"centos7\",\n" + 
-    				"        \"mpacks\": [\n" + 
-    				"          \n" + 
-    				"        ]\n" + 
+    				"        \"version\": \""+stackMajorVersion +"\",\n" +
+    				"        \"repositoryVersion\": \""+stackRepoVersion+"\",\n" + 
+    				"        \"versionDefinitionFileUrl\": \""+stackDefUrl+"\",\n" + 
+    				"        \"stackOs\": \""+stackOs+"\",\n" + 
+    				"        \"mpacks\": [ ]\n" + 
     				"      },\n" + 
     				"      \"userName\": \"admin\",\n" + 
     				"      \"password\": \"admin\",\n" + 
@@ -536,148 +603,95 @@ public class Controller{
     				"      \"validateBlueprint\": false,\n" + 
     				"      \"ambariSecurityMasterKey\": null\n" + 
     				"    },\n" + 
-    				"    \"rdsConfigNames\": [\n" + 
-    				"      \n" + 
-    				"    ],\n" + 
+    				"    \"rdsConfigNames\": [ ],\n" + 
     				"    \"ldapConfigName\": null,\n" + 
     				"    \"proxyName\": null\n" + 
     				"  },\n" + 
     				"  \"flexId\": null,\n" + 
     				"  \"imageSettings\": {\n" + 
-    				"    \"imageCatalog\": \"cloudbreak-default\",\n" + 
-    				"    \"imageId\": \"74d99079-f5d0-4470-78b3-11ceaf944069\"\n" + 
+    				"    \"imageCatalog\": \""+imageCatalog+"\",\n" + 
+    				"    \"imageId\": \""+imageId+"\"\n" + 
     				"  },\n" + 
     				"  \"imageType\": \"base\",\n" + 
     				"  \"instanceGroups\": [\n" + 
-    				"    {\n" + 
-    				"      \"parameters\": {\n" + 
-    				"        \n" + 
-    				"      },\n" + 
+    				"    {\"parameters\": {},\n" + 
     				"      \"template\": {\n" + 
-    				"        \"parameters\": {\n" + 
-    				"          \"encrypted\": false\n" + 
-    				"        },\n" + 
-    				"        \"instanceType\": \"m3.xlarge\",\n" + 
-    				"        \"volumeType\": \"HDD\",\n" + 
-    				"        \"volumeCount\": 0,\n" + 
+    				"        \"parameters\": {\"encrypted\": false},\n" + 
+    				"        \"instanceType\": \""+instanceType+"\",\n" + 
+    				"        \"volumeType\": \""+volumeType+"\",\n" + 
+    				"        \"volumeCount\": "+volumeCount+",\n" + 
     				"        \"volumeSize\": 100\n" + 
     				"      },\n" + 
     				"      \"nodeCount\": 1,\n" + 
     				"      \"group\": \"master\",\n" + 
     				"      \"type\": \"GATEWAY\",\n" + 
     				"      \"recoveryMode\": \"MANUAL\",\n" + 
-    				"      \"recipeNames\": [\n" + 
-    				"        \"configure-mysql-metastores\",\n" + 
-    				"        \"dps-dlm-register-cluster\",\n" + 
-    				"        \"dps-dlm-remove-cluster\",\n" + 
-    				"        \"install-dps-agents\"\n" + 
-    				"      ],\n" + 
-    				"      \"securityGroup\": {\n" + 
-    				"        \"securityGroupId\": \"de632b11-944c-4acb-a0cd-47f864150d5e\"\n" + 
-    				"      }\n" + 
+    				"      \"recipeNames\": ["+recipes+"],\n" + 
+    				"      \"securityGroup\": {\"securityGroupId\": \""+securityGroupId+"\"}\n" + 
     				"    },\n" + 
     				"    {\n" + 
-    				"      \"parameters\": {\n" + 
-    				"        \n" + 
-    				"      },\n" + 
+    				"      \"parameters\": {},\n" + 
     				"      \"template\": {\n" + 
-    				"        \"parameters\": {\n" + 
-    				"          \"encrypted\": false\n" + 
-    				"        },\n" + 
-    				"        \"instanceType\": \"m3.xlarge\",\n" + 
-    				"        \"volumeType\": \"HDD\",\n" + 
-    				"        \"volumeCount\": 0,\n" + 
+    				"        \"parameters\": {\"encrypted\": false},\n" +
+    				"        \"instanceType\": \""+instanceType+"\",\n" +
+    				"        \"volumeType\": \""+volumeType+"\",\n" + 
+    				"        \"volumeCount\": "+volumeCount+",\n" + 
     				"        \"volumeSize\": 100\n" + 
     				"      },\n" + 
     				"      \"nodeCount\": 1,\n" + 
     				"      \"group\": \"worker\",\n" + 
     				"      \"type\": \"CORE\",\n" + 
     				"      \"recoveryMode\": \"MANUAL\",\n" + 
-    				"      \"recipeNames\": [\n" + 
-    				"        \n" + 
-    				"      ],\n" + 
-    				"      \"securityGroup\": {\n" + 
-    				"        \"securityGroupId\": \"de632b11-944c-4acb-a0cd-47f864150d5e\"\n" + 
-    				"      }\n" + 
+    				"      \"recipeNames\": [ ],\n" + 
+    				"      \"securityGroup\": {\"securityGroupId\": \""+securityGroupId+"\"}\n" + 
     				"    }\n" + 
     				"  ],\n" + 
     				"  \"network\": {\n" + 
-    				"    \"parameters\": {\n" + 
+    				"      \"parameters\": {\"vpcId\":\""+vpcId+"\",\"networkId\":\""+networkId+"\",\"subnetId\":\""+subnetId+"\"," + 
     				"      \"publicNetId\": null,\n" + 
     				"      \"routerId\": null,\n" + 
-    				"      \"internetGatewayId\": null,\n" + 
-    				"      \"subnetId\": \"aa7c8bb9-0152-46b9-8596-935baca704a0\",\n" + 
-    				"      \"networkingOption\": \"provider\",\n" + 
-    				"      \"networkId\": \"71a870bb-191c-4abe-bf02-ece2e9b3345c\"\n" + 
+    				"      \"internetGatewayId\": null,\n" +
+    				"      \"networkingOption\": \"provider\"\n" + 
     				"    },\n" + 
     				"    \"subnetCIDR\": null\n" + 
     				"  },\n" + 
-    				"  \"stackAuthentication\": {\n" + 
-    				"    \"publicKeyId\": \"Field\",\n" + 
-    				"    \"publicKey\": null\n" + 
-    				"  }\n" + 
+    				"  \"stackAuthentication\": {\"publicKeyId\": \"field\", \"publicKey\": \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4YhcNwxMvZLyLECWfJyqf5rdk+R+DM2gzt0cEFYu9/SVV3GWAGvESevGCMEZaqapMDWgY+9n5uFgQRKo8UeVH1cJuRqQUZOY44ZiZokiMZ+kkY5rPOj44ArKXvqQDz0DB1EVyMYB8LATjloDtcghl51Z/y2hXMjaxpewYokTh8YTeMPvyBYvvIuRIW0EOMMDLXfR3EXaLwQAtlDjWkQYezFnkNM4lQsYJ50ohb/DA68ZCBhvTYqPYPbFmeNHubt/ymucecDaAJFbwmdHf6j+8xbT/HH/4GbCUXgU9RNCKgJfBlOcgEEBCy0cbg/hFz2sawMA+epuX4OhY2s9atugV cloudbreak\"}\n" + 
     				"}";
-    		}else if(variant.equalsIgnoreCase("aws")) {
-    			stackDef = "" +
-    				"{"
-    				+ "\"general\":   {\"credentialName\": \"openstack\",\"name\": \""+clusterName+"\"},"
-    				+ "\"tags\":      {\"userDefinedTags\": {}}, "
-    				+ "\"placement\": {\"availabilityZone\": \"us-east-1a\",\"region\": \"us-east-1\"},"
-    				+ "\"cluster\": { "
-    				+ "		\"fileSystem\": null," 
-    				+ "		\"ambari\": {"
-    				+ "			\"userName\": \"admin\", "
-    				+ "			\"password\": \"admin\"," 
-    				+ "     		\"blueprintName\": \"SHARED-SERVICES-V1.9\"," 
-    				+ "     		\"ambariStackDetails\": {\"stack\": \"HDP\",\"version\": \"2.6\",\"verify\": false,\"enableGplRepo\": false}," 
-    				+ "     		\"gateway\": {\"enableGateway\": false,\"gatewayType\": \"INDIVIDUAL\"}," 
-    				+ "			\"validateBlueprint\": false," 
-    				+ "      	\"ambariSecurityMasterKey\": null" 
-    				+ "    	}"
-    				+ "},"
-    				+ "\"instanceGroups\": [" 
-    				+ "		{\"parameters\": {},"
-    				+ "		 \"template\": {\"parameters\": {\"encrypted\":false},\"instanceType\":\"m4.2xlarge\",\"volumeType\":\"standard\",\"volumeCount\":1,\"volumeSize\":100}," 
-    				+ "      \"nodeCount\": 1," 
-    				+ "      \"group\": \"master\"," 
-    				+ "      \"type\": \"GATEWAY\","
-    				+ "      \"recoveryMode\": \"MANUAL\"," 
-    				+ "      \"securityGroup\": {\"securityGroupId\":\"sg-6bb0ac22\"}," 
-    				+ "      \"recipeNames\": [\"configure-mysql-metastores-v2\",\"install-dps-agents\",\"register-cluster-dps-dlm-v2\",\"remove-cluster-dps-dlm\"]" 
-    				+ "     }," 
-    				+ "     {\"parameters\": {}," 
-    				+ "      \"template\": {\"parameters\":{\"encrypted\": false},\"instanceType\":\"m4.xlarge\",\"volumeType\":\"standard\",\"volumeCount\":1,\"volumeSize\":100}," 
-    				+ "      \"nodeCount\": 1," 
-    				+ "      \"group\": \"worker\"," 
-    				+ "      \"type\": \"CORE\"," 
-    				+ "      \"recoveryMode\": \"MANUAL\","
-    				+ "      \"securityGroup\": {\"securityGroupId\":\"sg-7daab634\"}," 
-    				+ "      \"recipeNames\": []" 
-    				+ "     }"
-    				+ " ]," 
-    				+ "\"network\":{\"parameters\": {\"vpcId\":\"vpc-d85076bd\",\"subnetId\":\"subnet-dff56386\", \"publicNetId\": null,\"routerId\": null,\"internetGatewayId\": null,\"networkId\": null},\"subnetCIDR\": null},"
-    				+ "\"imageSettings\": {\"imageId\":\"433025f0-16bb-4b83-5ef7-fb795a9fc8ab\",\"imageCatalog\": \"cloudbreak-default\"}," 
-    				+ "\"stackAuthentication\": {\"publicKeyId\": \"field\",\"publicKey\": null}," 
-    				+ "\"flexId\": null" 
-    				+"}";
+
+    		System.out.println("********** Stack Def:" + stackDef + " to " + urlString);
+    		JSONObject postStackResponse = httpPostObject(urlString, stackDef); 
+    		System.out.println("********** Response:" + postStackResponse);
+    	
+    		String stackId = null;
+    		try {
+    			stackId = postStackResponse.getString("id");
+    		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+    	
+    		String clusterDef = null;   
+    		urlString = cloudbreakUrl+"/periscope/v1/clusters";
+    		clusterDef = "{\"stackId\": "+stackId+"}";
+    	
+    		System.out.println("********** Sending Cluster Create request to: "+ urlString +": with payload: "+clusterDef);
+        	JSONObject postClusterResponse = httpPostObject(urlString, clusterDef);
+        	System.out.println(postClusterResponse.toString());
+        	
+        	ObjectMapper mapper = new ObjectMapper();
+    		
+    		try {
+    			responseMap = mapper.readValue(postStackResponse.toString(), HashMap.class);
+    		} catch (JsonParseException e) {
+    			e.printStackTrace();
+    		} catch (JsonMappingException e) {
+    			e.printStackTrace();
+    		} catch (IOException e) {
+    			e.printStackTrace();
     		}
-    		/*stackDef = ""
-    		+ "{\"name\":\""+clusterName+"\","
-    		+ "\"credentialId\":"+credentialId+","
-    		+ "\"region\":\""+region+"\","
-    		+ "\"failurePolicy\":{\"adjustmentType\":\"BEST_EFFORT\",\"threshold\":null},"
-    		+ "\"onFailureAction\":\"DO_NOTHING\","
-    		+ "\"instanceGroups\":[{\"templateId\":"+templateId+",\"securityGroupId\":"+securityGroupId+",\"group\":\"master\",\"nodeCount\":1,\"type\":\"GATEWAY\"},"
-    					 		+ "{\"templateId\":"+templateId+",\"securityGroupId\":"+securityGroupId+",\"group\":\"worker\",\"nodeCount\":1,\"type\":\"CORE\"},"
-    					 		+ "\"parameters\":{},"
-    					 		+ "\"parameters\":{\"instanceProfileStrategy\":\"USE_EXISTING\",\"instanceProfile\":\""+s3ArnRoleInstanceProfile+"\"},"
-    					 		+ "\"networkId\":"+networkId+","
-    					 		+ "\"relocateDocker\":false,"
-    					 		+ "\"availabilityZone\":"+zone+","
-    					 		+ "\"orchestrator\":{\"type\":\"SALT\"},"
-    					 		+ "\"tags\":{\"userDefined\":{}},"
-    					 		+ "\"platformVariant\":\""+variant+"\",\"customImage\":null}"; */
-    	}else {
+    		
+    		return responseMap;
+    		
+    		/*
     		urlString = cloudbreakUrl+cloudbreakApiUriV2+stacksUri;
     		stackDef = "" +
     				"{"
@@ -733,31 +747,10 @@ public class Controller{
     				+ "\"imageSettings\": {\"imageId\":\"cab28152-f5e1-43e1-5107-9e7bbed33eef\",\"imageCatalog\": \"cloudbreak-default\"}," 
     				+ "\"stackAuthentication\": {\"publicKeyId\": \"field\",\"publicKey\": null}," 
     				+ "\"flexId\": null" 
-    				+"}";
+    				+"}";*/
     		
-    	}
-    	System.out.println("********** Stack Def:" + stackDef + " to " + urlString);
-    	JSONObject postStackResponse = httpPostObject(urlString, stackDef); 
-    	System.out.println("********** Response:" + postStackResponse);
-    	
-    	String stackId = null;
-    	try {
-		stackId = postStackResponse.getString("id");
-	} catch (JSONException e) {
-		e.printStackTrace();
-	}
-    	
-    	urlString = cloudbreakUrl+cloudbreakApiUri+"/stacks/"+stackId+"/cluster";
-    	
-    	urlString = cloudbreakUrl+"/periscope/v1/clusters";
-	
-    	
-    	String clusterDef = null;
-    	if (type.equalsIgnoreCase("shared-services")){   
-    		urlString = cloudbreakUrl+"/periscope/v1/clusters";
-    		clusterDef = "{\"stackId\": "+stackId+"}";
-    	}else {
-    		clusterDef = "{\"stackId\": "+stackId+"}";
+    		//urlString = cloudbreakUrl+cloudbreakApiUri+"/stacks/"+stackId+"/cluster";
+    		
     		/*
     		clusterDef = "{\"name\":\""+clusterName+"\","
     			+ "\"blueprintId\":"+blueprintId+","
@@ -778,30 +771,9 @@ public class Controller{
     			+ "\"ambariRepoDetailsJson\":null,"
     			+ "\"ambariStackDetails\":null,"
     			+ "\"configStrategy\":\"ALWAYS_APPLY_DONT_OVERRIDE_CUSTOM_VALUES\"}"; */
-    		
-    		System.out.println("********** Sending Cluster Create request to: "+ urlString +": with payload: "+clusterDef);
-        	JSONObject postClusterResponse = httpPostObject(urlString, clusterDef);
-        	System.out.println(postClusterResponse.toString());
-        	
-        	ObjectMapper mapper = new ObjectMapper();
-    		// convert JSON string to Map
-    		
-    		try {
-    			responseMap = mapper.readValue(postStackResponse.toString(), HashMap.class);
-    		} catch (JsonParseException e) {
-    			e.printStackTrace();
-    		} catch (JsonMappingException e) {
-    			e.printStackTrace();
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
-    	
-    
-    	return responseMap;
     }
-    
-    private HashMap<String, Object> getCredentials(String platform) {
+
+	private HashMap<String, Object> getCredentials(String platform) {
     	HashMap<String, Object> credentials = new HashMap<String, Object>();
     	String urlString = cloudbreakUrl+cloudbreakApiUri+credentialsUri;
     	System.out.println("********** " + urlString);
@@ -812,6 +784,9 @@ public class Controller{
 				credential_id = credentialsJSON.getJSONObject(i).getString("id");
 				String credential_name = credentialsJSON.getJSONObject(i).getString("name");
 				String credential_platform = credentialsJSON.getJSONObject(i).getString("cloudPlatform");
+				
+				System.out.println("**********");
+				System.out.println(credentialsJSON);
 				System.out.println("**********");
 				System.out.println(credential_name);
 				System.out.println("**********");
@@ -843,7 +818,6 @@ public class Controller{
 				
 				//if(template_name.length() <= 25)
 				//	template_name = instance_type;
-				
 				System.out.println("**********");
 				System.out.println(template_name);
 				System.out.println("**********");
@@ -915,12 +889,12 @@ public class Controller{
     }
     
     private HashMap<String, Object> getRecipes() {
-    	HashMap<String, Object> recipes = new HashMap<String, Object>();
-    	String urlString = cloudbreakUrl+cloudbreakApiUri+recipesUri;
+    		HashMap<String, Object> recipes = new HashMap<String, Object>();
+    		String urlString = cloudbreakUrl+cloudbreakApiUri+recipesUri;
 		
-    	JSONArray recipesJSON = httpGetArray(urlString);
-    	for(int i=0;i<recipesJSON.length();i++){
-    		String recipe_id;
+    		JSONArray recipesJSON = httpGetArray(urlString);
+    		for(int i=0;i<recipesJSON.length();i++){
+    			String recipe_id;
 			try {
 				recipe_id = recipesJSON.getJSONObject(i).getString("id");
 				String recipe_name = recipesJSON.getJSONObject(i).getString("name");
@@ -931,27 +905,57 @@ public class Controller{
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}	
-    	}	
+    		}	
     	
-    	return recipes;
+    		return recipes;
     }
     
+	private String createSemiEphemeralRecipe(String clusterName, String sourceClusterId, String sourceDatasetName) {
+		HashMap<String, Object> recipes = new HashMap<String, Object>();
+		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+	
+		String recipeContent = "#!/bin/bash \n"+
+			 		 "yum install -y wget \n"+
+			 		 "git clone https://github.com/vakshorton/CloudBreakArtifacts \n"+
+			 		 "CloudBreakArtifacts/recipes/dps_dlm_register_cluster.py "+dpsHost+" "+sourceClusterId+" "+sourceDatasetName;
+	
+		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
+	
+		String payload = "{\"name\":\""+clusterName+"\",\"description\": \"temporal recipe for ephemeral cluster\",\"recipeType\":\"POST_CLUSTER_INSTALL\",\"content\": \""+encodedContent+"\",\"uri\": null}";
+		System.out.println("********** Creating Recipe payload: "+payload);
+	
+		JSONObject recipesJSON = httpPostObject(urlString, payload);
+		String recipe_id = null;
+		String recipe_name = null;
+		try {
+			recipe_id = recipesJSON.getString("id");
+			recipe_name = recipesJSON.getString("name");
+			System.out.println("********** " +recipe_id+" - "+recipe_name);
+			recipes.put(recipe_name,recipe_id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return recipe_name;
+	}
+    
     private HashMap<String, Object> createEphemeralRecipe(String clusterName, String sharedServicesIp, String targetBucket, String sharedRangerHiveRepo) {
-    	HashMap<String, Object> recipes = new HashMap<String, Object>();
-    	String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+    		HashMap<String, Object> recipes = new HashMap<String, Object>();
+    		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
 		
-    	String recipeContent = "#!/bin/bash \n"+
+    		String recipeContent = "#!/bin/bash \n"+
 				 		 "yum install -y wget \n"+
 				 		 "git clone https://github.com/vakshorton/CloudBreakArtifacts \n"+
 				 		 "CloudBreakArtifacts/recipes/ephemeral-cluster-install.sh "+sharedServicesIp+" "+targetBucket+" "+sharedRangerHiveRepo;
 		
-    	String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+    		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
 		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
     	
 		String payload = "{\"name\":\""+clusterName+"\",\"description\": \"temporal recipe for ephemeral cluster\",\"recipeType\":\"POST_CLUSTER_INSTALL\",\"content\": \""+encodedContent+"\",\"uri\": null}";
 		System.out.println("********** Creating Recipe payload: "+payload);
 		
-    	JSONObject recipesJSON = httpPostObject(urlString, payload);
+    		JSONObject recipesJSON = httpPostObject(urlString, payload);
 		try {
 			String recipe_id = recipesJSON.getString("id");
 			String recipe_name = recipesJSON.getString("name");
@@ -961,7 +965,7 @@ public class Controller{
 			e.printStackTrace();
 		}
 
-    	return recipes;
+    		return recipes;
     }
     
     private int deleteEphemeralRecipe(String clusterName) {
