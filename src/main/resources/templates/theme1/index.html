@@ -194,10 +194,10 @@
                   							<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
                   							<div class="col-sm-9">
                      							<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="cluster_type" required disabled>
+                        							<option value="dps-managed">DPS Managed Cluster</option>
+                        							<option value="shared-services">Shared Services</option>
                         							<option value="connected-platform" selected="selected">Connected Platform</option>
                         							<option value="historian">Historian</option>
-                        							<option value="managed-cluster">DPS Managed Cluster</option>
-                        							<option value="shared-services">Shared Services</option>
                      							</select>
                   							</div>
                   						</div>	
@@ -246,6 +246,7 @@
                      						<input type="text" id="ephemeral_target_bucket" name="targetBucket" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
                   						</div>
                   					</div>
+                  				<!-- 	
                   				<div class="form-group required" id="ephemeral_general_info_body">
                   						<label class="col-sm-3 control-label" for="replicationSourceClusterId">Replication Source Name</label>
                   						<div class="col-sm-9">
@@ -257,7 +258,11 @@
                   						<div class="col-sm-9">
                      						<input type="text" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
                   						</div>
-                  					</div>			
+                  					</div> -->
+                  					<input type="hidden" id="shared_services_status" name="shared_services_status" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  					<input type="hidden" id="shared_services_cluster_name" name="shared_services_cluster_name" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  					<input type="hidden" id="ephemeral_replication_source_clusterId" name="replicationSourceClusterId" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">	
+                  					<input type="hidden" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">		
     								<div class="form-group required" id="ephemeral_general_info_body">
                   						<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
                   						<div class="col-sm-9">
@@ -337,7 +342,7 @@ function displayWizard() {
 		form.style.display = 'none'
 }
 
-function displayEphemeralWizard(targetBucket, replicationSourceClusterId, replicationSourceDatasetName) {
+function displayEphemeralWizard(targetBucket, replicationSourceClusterId, replicationSourceDatasetName, isTrueEphemeral) {
 	var form = document.getElementById('ephemeral_form_container')
 	
 	if (form.style.display == 'none')
@@ -347,7 +352,12 @@ function displayEphemeralWizard(targetBucket, replicationSourceClusterId, replic
 	
 	document.getElementById('ephemeral_target_bucket').value = targetBucket
 	document.getElementById('ephemeral_replication_source_clusterId').value = replicationSourceClusterId
-	document.getElementById('ephemeral_replication_source_dataset_name').value = replicationSourceDatasetName	
+	document.getElementById('ephemeral_replication_source_dataset_name').value = replicationSourceDatasetName
+	if(isTrueEphemeral){
+		document.getElementById('ephemeral_cluster_type').value = 'ephemeral' 
+	}else{
+		document.getElementById('ephemeral_cluster_type').value = 'semi-ephemeral'
+	}
 }
 
 function exploreAtlas() {
@@ -376,6 +386,68 @@ function refreshCatalog(){
 	getFileTree()
 }
 
+function displayDssEntity(collectionId, assetGuid) {
+var form = document.getElementById('atlas_viewer_container')
+	
+	if (form.style.display == 'none')
+		form.style.display = 'block'
+	
+	var url = "/getDssEntity?collectionId="+collectionId+"&assetGuid="+assetGuid
+	
+	var name = ""
+	var qualifiedName = ""
+	var outputFormat = ""
+	var tableLocation = ""
+    var targetBucket = ""
+	var lastAccess = ""
+			
+	$.get(url , function(data) {
+		console.log(data);
+		
+		name = data.entity.attributes.name
+		qualifiedName = data.entity.attributes.qualifiedName
+		sdGuid = data.entity.attributes.sd.guid
+		outputFormat = data.referredEntities[sdGuid].attributes.outputFormat
+	    tableLocation = data.referredEntities[sdGuid].attributes.location
+		lastAccess = data.entity.attributes.lastAccessTime
+		targetBucket = tableLocation.replace('/'+name, '')
+		console.log(qualifiedName.split('.'))
+		sourceDatasetName = qualifiedName.split('.')[0]
+		sourceDatasetClusterName = qualifiedName.split('@')[1]
+		console.log(sourceDatasetName)
+		atlasViewerHtml = '<div>'+
+		'<b>Name:</b> ' +name+'<br>'+
+		'<b>qualifiedName:</b> '+qualifiedName+'<br>'+
+		'<b>outputFormat:</b> '+outputFormat+'<br>'+
+	    '<b>location:</b> '+tableLocation+'<br>'+
+		'<b>createTime:</b> '+lastAccess + '<br><br>'+
+		'<table>'+
+		'<tr><th>Column Name</th><th>Column Type</th></tr>'
+		for (var i = 0; i < data.entity.attributes.columns.length; i++) {
+			currColumnGuid = data.entity.attributes.columns[i].guid
+			currColumnName = data.referredEntities[currColumnGuid].attributes.name
+			currColumnType = data.referredEntities[currColumnGuid].attributes.type
+			atlasViewerHtml = atlasViewerHtml+'<tr><td>'+currColumnName+'</td><td>'+currColumnType+'</td></tr>'
+		}
+		atlasViewerHtml = atlasViewerHtml + '<tr></table></div>'
+		if(sourceDatasetClusterName != document.getElementById('shared_services_cluster_name').value){
+			atlasViewerHtml = atlasViewerHtml + '<div style="float: right;">'
+										 + '		<button id="temp_workspace_button" onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', false)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
+										 + '			Clone Workspace'
+										 + '		</button>'
+										 + '</div>'
+		}								 
+		if(sourceDatasetClusterName == document.getElementById('shared_services_cluster_name').value){
+			atlasViewerHtml = atlasViewerHtml + '<div style="float: right;">'
+											 + '		<button id="access_dataset_button" onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', true)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
+											 + '			Provsion Temp Workspace'
+											 + '		</button>'
+											 + '</div>'
+		}
+		document.getElementById('atlas_viewer').innerHTML = atlasViewerHtml;
+	});
+}
+
 function displayEntity(entityName, sourceClusterId) {
 	var form = document.getElementById('atlas_viewer_container')
 	
@@ -401,6 +473,7 @@ function displayEntity(entityName, sourceClusterId) {
 		targetBucket = tableLocation.replace('/'+name, '')
 		console.log(qualifiedName.split('.'))
 		sourceDatasetName = qualifiedName.split('.')[0]
+		sourceDatasetClusterName = qualifiedName.split('*')[1]
 		console.log(sourceDatasetName)
 		atlasViewerHtml = '<div>'+
 		'<b>Name:</b> ' +name+'<br>'+
@@ -420,11 +493,13 @@ function displayEntity(entityName, sourceClusterId) {
 										 + '			Provision Temp Workspace'
 										 + '		</button>'
 										 + '</div>'
-										 + '<div style="float: right;">'
+		if(sourceDatasetClusterName == document.getElementById('shared_services_cluster_name').value){
+		atlasViewerHtml = atlasViewerHtml + '<div style="float: right;">'
 										 + '		<button onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\')" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
 										 + '			Access Dataset'
 										 + '		</button>'
 										 + '</div>'
+		}								 
 		document.getElementById('atlas_viewer').innerHTML = atlasViewerHtml;
 	});
 }
@@ -497,8 +572,9 @@ function populateEphemeralClusterOptions() {
 	$.get(url , function(data) {
 		console.log(data);
 		
-		clearSelect(document.getElementById('ephemeral_cluster_type'))
+		//clearSelect(document.getElementById('ephemeral_cluster_type'))
 		var templates = data.templates
+		/*
 		if(document.getElementById('ephemeral_replication_source_clusterId').value == null || document.getElementById('ephemeral_replication_source_dataset_name').value == null){
 			option = document.createElement('option')
 			option.text = 'Ephemeral'
@@ -511,7 +587,7 @@ function populateEphemeralClusterOptions() {
 			option.value = 'semi-ephemeral'
 			document.getElementById('ephemeral_cluster_type').add(option)
 			option.selected = true
-		}
+		}*/
 		
 		clearSelect(document.getElementById('ephemeral_templates'))
 		var templates = data.templates
@@ -543,9 +619,10 @@ function refreshClusters(){
 	setTimeout(refreshClusters, 15000)
 	var url = "/refreshAllClusters";
 	console.log(url);
-	
+	var isSharedServices = false
 	$.get(url, function(data) {
 		console.log(data)
+		
 		$('.cluster').remove();
 		for (var key in data) {
 			var clusterId = key
@@ -554,11 +631,18 @@ function refreshClusters(){
 			var platform = data[key].platform
 			var templateName = data[key].templateName
 			var clusterAmbariIp = data[key].clusterAmbariIp
-			var clusterStatus = data[key].clusterStatus
-		
+			var clusterStatus = data[key].clusterStatus 
+			console.log('Shared Services Status: ' + isSharedServices)
+			if(data[key].isSharedServices){
+				isSharedServices = true
+				$('#shared_services_cluster_name').val(clusterName)
+			}	
 			paintCluster(clusterId, clusterName, clusterType, clusterStatus, platform, templateName, clusterAmbariIp)
-		}	
+		}
+		$('#shared_services_status').val(isSharedServices)
 	});
+	console.log('Shared Services Status: ' + document.getElementById('shared_services_status').value)
+	console.log('Shared Services Cluster Name: ' + document.getElementById('shared_services_cluster_name').value)
 }
 
 function refreshArtifacts(){
@@ -652,14 +736,14 @@ function paintCluster(clusterId, clusterName, clusterType, clusterStatus, platfo
 //	  '		<div class="cluster-summary-col">' +
 	  '			<h5 class="card-list-title">' +
       '  		<div class="dropdown" id="clusteraction_dropdown" style="float: left;">' +
-      '      		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu01" style="border-color: #456b7e; color: #456b7e;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">' +
+      '      		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownButton01" style="border-color: #456b7e; color: #456b7e;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
       '          		Actions<span class="caret"></span>' +
       '      		</button>' +
-      '     		<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu02" id="cluster-actions">' +
+      '     			<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownButton01" id="cluster-actions">' +
       '          		<li class="ng-scope" style="height: 30px; " onclick="terminateCluster('+clusterId+')">' +
       //'					<a href="" class="" role="button" id="terminate">' +
       '					<i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Terminate</li>' +
-      '     		</ul>' +
+      '     			</ul>' +
       '  		</div>' +
       '	    	</h5>'
 //	  '		</div>' +
@@ -672,14 +756,15 @@ function paintCluster(clusterId, clusterName, clusterType, clusterStatus, platfo
 		 // ' 	<div class="cluster-summary-col">' +
 	      ' 	<h5 class="card-list-title">' +
 	      '  		<div class="dropdown" id="clusteruis_dropdown" style="float: right;">' +
-	      '      		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu01" style="border-color: #456b7e; color: #456b7e;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">' +
+	      '      		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownButton02" style="border-color: #456b7e; color: #456b7e;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
 	      '          		Cluster UIs<span class="caret"></span>' +
 	      '      		</button>' +
-	      '     		<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu02" id="cluster-services">' +
+	      '     			<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownButton02" id="cluster-services">' +
 	      '          		<li class="ng-scope"><a href="https://'+ambariServerIp+'/'+clusterName+'/services/ambari/" class="" role="button" target="_blank">' +
 	      '						<i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Ambari Web</a></li>' +
-	      '          		<li class="ng-scope"><a href="https://'+ambariServerIp+'/'+clusterName+'/services/ambari/#/main/views/HIVE/2.0.0/AUTO_HIVE20_INSTANCE" role="button" target="_blank" class="ng-binding"><i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Hive View 2.0</a></li>' +
-	      '     		</ul>' +
+	      '          		<li class="ng-scope"><a href="https://'+ambariServerIp+'/'+clusterName+'/services/ambari/#/main/views/HIVE/2.0.0/AUTO_HIVE20_INSTANCE" role="button" target="_blank" class="ng-binding">' +
+	      ' 						<i class="fa fa-fw fa-external-link" aria-hidden="true"></i>Hive View 2.0</a></li>' +
+	      '     			</ul>' +
 	      '  		</div>' +
 	      '	    </h5>' //+
 		//  '		</div>' +
@@ -803,13 +888,16 @@ $.get("/getfiletree", function(tree) {
 	
 	$('#using_json').on("select_node.jstree", function (e, data) { 
 		console.log(e);
-		console.log(data);
 		console.log("node: " + data.node.text);
-		entityFQN = data.node.id;
+		console.log("selected node: " + data);
+		entityFQN = data.node.id.split('*')[0];
+		collectionId = data.node.id.split('*')[3];
+		assetGuid = data.node.id.split('*')[2];
 		entityName = data.node.text;
-		sourceClusterId = data.node.id.split('@')[1];
-		
-		displayEntity(entityFQN, sourceClusterId)
+		sourceClusterId = entityFQN.split('@')[1];
+		console.log("selected node: " + entityFQN + " " + collectionId + " " + assetGuid);
+		displayDssEntity(collectionId, assetGuid)
+		//displayEntity(entityFQN, sourceClusterId)
 		//var elem =document.getElementById('checkbox0');
 		//getTsFunction(elem, 0, "sum"); //  "2017-04-23_00:00:00", "2017-05-03_00:00:00", "sum", "minute");
 	}); 

@@ -55,8 +55,8 @@ public abstract class Atlas {
 	private static String dps_clusters_uri = "/api/actions/clusters?type=all";
 	private static String dlm_clusters_uri = "/dlm/api/clusters";
 	private static String dlm_policies_uri = "/dlm/api/policies?numResults=200&instanceCount=10";
-	private static String dss_collections_uri = "/api/dataset/list/tag/ALL?offset=0&size=10";
-	private static String dss_assets_uri = "/api/dataset";	
+	private static String dss_collections_uri = "/dss/api/dataset/list/tag/ALL?offset=0&size=10";
+	private static String dss_assets_uri = "/dss/api/dataset";	
 	
 	public static List<AtlasItem> atlasCache = new ArrayList<AtlasItem>();
 	public static HashMap<String, Object> atlasFileTree = new HashMap<String, Object>();
@@ -153,7 +153,8 @@ public abstract class Atlas {
 			collectionMap.put("clusterId", collectionClusterId);
 		
 			LOG.info("++++++++++++++ Collection: " + collectionName);
-			JSONArray assets = httpGetArray(dps_url+dss_assets_uri + "/" + collectionId + "/assets?queryName&offset=0&limit=100", token);
+			//JSONArray assets = httpGetArray(dps_url+dss_assets_uri + "/" + collectionId + "/assets?queryName&offset=0&limit=100", token);
+			JSONArray assets = httpGetObject(dps_url+dss_assets_uri + "/" + collectionId + "/assets?queryName&offset=0&limit=100", token).getJSONArray("assets");
 			for(int j = 0; j < assets.length(); j++) {
 				Map<String, Object> asset = new HashMap<String, Object>();
 				JSONObject assetJSON = assets.getJSONObject(j);
@@ -161,10 +162,10 @@ public abstract class Atlas {
 				String assetName = assetJSON.getString("assetName");
 				String assetFQN = assetJSON.getJSONObject("assetProperties").getString("qualifiedName");
 				String assetGuid = assetJSON.getString("guid");
-				asset.put("id", assetFQN);
+				asset.put("id", assetFQN+"*"+assetId+"*"+assetGuid+"*"+collectionId);
 				asset.put("text", assetName);
 				asset.put("clusterId", collectionClusterId);
-				LOG.info("+++++++++++++ AssetId: " + assetId + " AssetName: " + assetName + " GUID: " + assetGuid);
+				LOG.info("+++++++++++++ AssetId: " + assetId + " AssetName: " + assetName + " GUID: " + assetGuid + " collectionId:" + collectionId);
 				assetList.add(asset);
 			}
 			collectionMap.put("children", assetList);
