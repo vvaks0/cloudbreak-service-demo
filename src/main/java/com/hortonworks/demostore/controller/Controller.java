@@ -278,7 +278,7 @@ public class Controller{
 				sharedServicesLdap = sharedServicesClusterName+ldapSuffix;
 			}
 			if(sharedServicesAmbariHost != null && sharedServicesHiveMetastoreRds == null) {
-				JSONObject hiveMetastoreResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+rdsUri+"/"+hiveRdsSuffix);
+				JSONObject hiveMetastoreResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+rdsUri+"/"+sharedServicesClusterName+hiveRdsSuffix);
 				LOG.info("********** Checking for Shared Services Hive Metastore: " + hiveMetastoreResult);
 				if(hiveMetastoreResult.isNull("name")) {				
 					createSharedServicesHiveMetastoreRds(sharedServicesClusterName, sharedServicesAmbariHost, hiveMetastoreRdsPprt);
@@ -286,7 +286,7 @@ public class Controller{
 				sharedServicesHiveMetastoreRds = sharedServicesClusterName+hiveRdsSuffix;
 			}
 			if(sharedServicesAmbariHost != null && sharedServicesRangerMetastoreRds == null) {
-				JSONObject rangerMetastoreResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+rdsUri+"/"+rangerRdsSuffix);
+				JSONObject rangerMetastoreResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+rdsUri+"/"+sharedServicesClusterName+rangerRdsSuffix);
 				LOG.info("********** Checking for Shared Services Ranger Metastore: " + rangerMetastoreResult);
 				if(rangerMetastoreResult.isNull("name")) {				
 					createSharedServicesRangerMetastoreRds(sharedServicesClusterName, sharedServicesAmbariHost, rangerMetastoreRdsPprt);
@@ -780,7 +780,7 @@ public class Controller{
     			ldapConfigName = "\""+sharedServicesLdap+"\"";
     			mpacks = "";
     		}else if(type.equalsIgnoreCase("dps-managed")) {
-    			blueprint = "DPS-MANAGED-V1.3";
+    			blueprint = "DPS-MANAGED-V1.5";
     			workerCount = "3";
     			if(platform.equalsIgnoreCase("GCP")) {
     				recipes += ",\"dps-dlm-register-cluster-gcp-1-1-0\",\"load-logistics-dataset\"";
@@ -790,7 +790,7 @@ public class Controller{
     				recipes += ",\"dps-dlm-register-cluster-openstack-1-1-0\",\"load-logistics-dataset\"";
     			}
     		}else if(type.equalsIgnoreCase("shared-services")) {
-    			blueprint = "SHARED-SERVICES-V1.15";
+    			blueprint = "SHARED-SERVICES-V1.17";
     			workerCount = "3";
     			if(platform.equalsIgnoreCase("GCP")) {
     				recipes += ",\"dps-dlm-register-cluster-sharedservices-gcp-1-1-0\"";
@@ -1280,7 +1280,7 @@ public class Controller{
     		response = httpGetDpsArray(urlString, token);
     		 
     		for(int i=0; i<response.length(); i++) {
-    			LOG.info("********** getSharedServices(): " + response);
+    			LOG.info("********** getSharedServices(): " + response.getJSONObject(i).getJSONObject("data"));
     			//List<String> tags = mapper.readValue(response.getJSONObject(i).getJSONObject("data").getJSONObject("properties").getJSONArray("tags").toString(), List.class);
     			JSONArray tags = response.getJSONObject(i).getJSONObject("data").getJSONObject("properties").getJSONArray("tags");
     			LOG.info("********** tags: " + tags);
@@ -1292,6 +1292,7 @@ public class Controller{
         				clusterData.put("id", response.getJSONObject(i).getJSONObject("data").getString("id"));
         				clusterData.put("ambariUrl", response.getJSONObject(i).getJSONObject("data").getString("ambariUrl"));
         				isSharedServicesProvisioned = true;
+        				LOG.info("********** sharedServicesClusterName: " + sharedServicesClusterName);
         				break;
         			}
     			}

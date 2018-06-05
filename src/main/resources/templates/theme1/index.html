@@ -60,15 +60,29 @@
 <script src="theme1/js/plugins/metisMenu/jquery.metisMenu.js"></script>
 <script src="theme1/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
 
+<!-- Mainly scripts -->
+<script src="theme1/js/jquery-3.1.1.min.js"></script>
+<script src="theme1/js/bootstrap.min.js"></script>
+<script src="theme1/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="theme1/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="theme1/js/inspinia.js"></script>
+<script src="theme1/js/plugins/pace/pace.min.js"></script>
+<script src="theme1/js/plugins/jsTree/jstree.min.js"></script>
+
+<!-- Switchery -->
+<script src="theme1/js/plugins/switchery/switchery.js"></script>
+<script src="theme1/js/jquery-ui-1.12.1/jquery-ui.js"></script><!-- Data picker -->
+<script src="theme1/js/plugins/datapicker/bootstrap-datepicker.js"></script>
+
 <!-- Custom and plugin javascript -->
 <script src="theme1/js/inspinia.js"></script>
 <script src="theme1/js/plugins/pace/pace.min.js"></script>
 
 <div id="wrapper">
-
     <nav class="navbar-default navbar-static-side" role="navigation">
         <div class="sidebar-collapse">
-            
             <ul class="nav metismenu" id="side-menu">
                 <li class="nav-header">
                 <div class="logo">
@@ -138,38 +152,37 @@
     </div>
 	
 	<div id="" class="gray-bg">  id=page-wrapper -->
-		<div class="row border-bottom"></div>
-			<div class="row wrapper border-bottom white-bg page-heading"></div>
-				<div class="wrapper wrapper-content animated fadeInRight">
-    				<div class="row">
-					<div id="catalog_search" class="col-lg-3" style="display: none">
-            				<div class="ibox float-e-margins">
-                				<div class="ibox-title">
+	<div class="row border-bottom"></div>
+	<div class="row wrapper border-bottom white-bg page-heading"></div>
+	<div class="wrapper wrapper-content animated fadeInRight">
+    			<div class="row">
+				<div id="catalog_search" class="col-lg-3" style="display: none">
+            			<div class="ibox float-e-margins">
+                			<div class="ibox-title">
                     			<!-- <h5>Atlas Explorer</h5>  
                     				<div style="display: none;float: left; padding-bottom: 15px;"><button onclick="exploreAtlas()" class="btn btn-default" style="float: left; border-color: #456b7e; color: #456b7e;">Atlas Explorer</button></div>
                     				<div style="float: left; padding-bottom: 15px;"><button onclick="displayWizard()" class="btn btn-default" style="float: left; border-color: #456b7e; color: #456b7e;">Provision Demo</button></div>
                     				<div style="padding-bottom: 15px;"><button onclick="refreshArtifacts()" class="btn btn-default" style="float: left; border-color: #456b7e; color: #456b7e;">Synch Artifacts</button></div> -->
-                    				<div class="ibox-tools">
-                        				<a class="collapse-link">
-                            				<i class="fa fa-chevron-up"></i>
-                        				</a>
-                    				</div>
-                				</div>
-                				<div class="ibox-title">
-                   					<input value="" style="box-shadow:inset 0 0 4px #eee; width:220px; margin:0; padding:6px 12px; border-radius:4px; border:1px solid silver; font-size:1.1em;" id="demo_q" placeholder="Search" type="text">
-                				</div>
-                				<div class="ibox-content">
-									<div id="using_json"></div>
-                				</div>
-            			  </div>
-        			  </div>
+                    			<div class="ibox-tools">
+                        			<a class="collapse-link">
+                            			<i class="fa fa-chevron-up"></i>
+                        			</a>
+                    			</div>
+                			</div>
+                			<div class="ibox-title">
+                   			<input value="" style="box-shadow:inset 0 0 4px #eee; width:220px; margin:0; padding:6px 12px; border-radius:4px; border:1px solid silver; font-size:1.1em;" id="demo_q" placeholder="Search" type="text">
+                			</div>
+                			<div class="ibox-content">
+							<div id="using_json"></div>
+                			</div>
+					</div>
+				</div>
     				<div id="atlas" class="col-lg-9">	
     					<div id="atlas_viewer_container" class="ibox float-e-margins" style="display: none">
-    						<div id="atlas_viewer" class="ibox-content" style="height: 300px;">
-    						</div>
+    						<div id="atlas_viewer" class="ibox-content" style="height: 300px;"></div>
     					</div>
     				</div>
-   					<div id="wizard" class="col-lg-9">	
+   				<div id="wizard" class="col-lg-9">	
     					<div id="form_container" class="ibox float-e-margins" style="display: none">
     						<div class="ibox-content" style="height: 325px;">
     							<form id="main_form">
@@ -186,24 +199,24 @@
                   						</div>
                 					</div>
     								<div class="form-group required" id="general_info_body">
-                  						<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
+                  					<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
+                  					<div class="col-sm-9">
+                     					<input type="text" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled id="cluster_name" name="clusterName" placeholder="(REQUIRED) Enter cluster name (min 5, max 20, must start with a letter, accepted chars: a-z, 0-9, -)" style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  					</div>
+                  					<div class="form-group">
+                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
                   						<div class="col-sm-9">
-                     						<input type="text" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled id="cluster_name" name="clusterName" placeholder="(REQUIRED) Enter cluster name (min 5, max 20, must start with a letter, accepted chars: a-z, 0-9, -)" style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="cluster_type" required disabled>
+                        						<option value="dps-managed">DPS Managed Cluster</option>
+                        						<option value="shared-services">Shared Services</option>
+                        						<option value="connected-platform" selected="selected">Connected Platform</option>
+                        						<option value="historian">Historian</option>
+                     						</select>
                   						</div>
-                  						<div class="form-group">
-                  							<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
-                  							<div class="col-sm-9">
-                     							<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="cluster_type" required disabled>
-                        							<option value="dps-managed">DPS Managed Cluster</option>
-                        							<option value="shared-services">Shared Services</option>
-                        							<option value="connected-platform" selected="selected">Connected Platform</option>
-                        							<option value="historian">Historian</option>
-                     							</select>
-                  							</div>
-                  						</div>	
-               						</div>    				
-    							<h3 class="form-group-title">Hardware &amp; Storage</h3>
-    			 				<div class="form-group">
+                  					</div>	
+								</div>    				
+    								<h3 class="form-group-title">Hardware &amp; Storage</h3>
+    			 					<div class="form-group">
                   					<label class="col-sm-3 control-label" for="selecthdpVersion">Instance Type</label>
                   					<div class="col-sm-9">
                      					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="templates" required disabled>
@@ -211,7 +224,7 @@
                   					</div>
                   				</div>
 								<h3 class="form-group-title">Security</h3>
-    							<div class="form-group">
+    								<div class="form-group">
                   					<label class="col-sm-3 control-label" for="selecthdpVersion">Credentials</label>
                   					<div class="col-sm-9">
                      					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="credentials" required disabled></select>	
@@ -222,7 +235,7 @@
     								<button id="create_cluster" disabled onclick="createCluster(false)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">Create Cluster</button>
     							</div>
     						</div>
-						</div>	 	
+					</div>	 	
     				</div>
     				<div id="ephemerial_wizard" class="col-lg-9">	
     					<div id="ephemeral_form_container" class="ibox float-e-margins" style="display: none">
@@ -233,19 +246,19 @@
                   						<label class="col-sm-3 control-label" for="selecthdpVersion">Target Cloud Platform</label>
                   						<div class="col-sm-9">
                      						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_platform" onChange="populateEphemeralClusterOptions()" required>
-                        						<option value="" selected="selected">Select Target Cloud</option>
-                        						<option value="AWS">AWS</option>
-                        						<option value="GCP">GCP</option>
-    											<option value="OPENSTACK">OPENSTACK</option>
+                        							<option value="" selected="selected">Select Target Cloud</option>
+                        							<option value="AWS">AWS</option>
+                        							<option value="GCP">GCP</option>
+    												<option value="OPENSTACK">OPENSTACK</option>
                      						</select>
                   						</div>
                 					</div>
                 					<div class="form-group required" id="ephemeral_general_info_body">
-                  						<label class="col-sm-3 control-label" for="targetBucket">Target Bucket</label>
-                  						<div class="col-sm-9">
-                     						<input type="text" id="ephemeral_target_bucket" name="targetBucket" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
-                  						</div>
+                  					<label class="col-sm-3 control-label" for="targetBucket">Target Bucket</label>
+                  					<div class="col-sm-9">
+                     					<input type="text" id="ephemeral_target_bucket" name="targetBucket" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
                   					</div>
+                  				</div>
                   				<!-- 	
                   				<div class="form-group required" id="ephemeral_general_info_body">
                   						<label class="col-sm-3 control-label" for="replicationSourceClusterId">Replication Source Name</label>
@@ -258,64 +271,52 @@
                   						<div class="col-sm-9">
                      						<input type="text" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
                   						</div>
-                  					</div> -->
-                  					<input type="hidden" id="shared_services_status" name="shared_services_status" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
-                  					<input type="hidden" id="shared_services_cluster_name" name="shared_services_cluster_name" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
-                  					<input type="hidden" id="ephemeral_replication_source_clusterId" name="replicationSourceClusterId" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">	
-                  					<input type="hidden" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">		
+                  				</div> -->
+                  				<input type="hidden" id="shared_services_status" name="shared_services_status" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  				<input type="hidden" id="shared_services_cluster_name" name="shared_services_cluster_name" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  				<input type="hidden" id="ephemeral_replication_source_clusterId" name="replicationSourceClusterId" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">	
+                  				<input type="hidden" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">		
     								<div class="form-group required" id="ephemeral_general_info_body">
-                  						<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
-                  						<div class="col-sm-9">
-                     						<input type="text" id="ephemeral_cluster_name" name="clusterName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
-                  						</div>
-                  					</div>	
-                  					<div class="form-group">
-										<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
-                  						<div class="col-sm-9">
-                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_cluster_type" required disabled>
+                  					<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
+                  					<div class="col-sm-9">
+                     					<input type="text" id="ephemeral_cluster_name" name="clusterName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  					</div>
+                  				</div>	
+                  				<div class="form-group">
+									<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
+                  					<div class="col-sm-9">
+                     					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_cluster_type" required disabled>
                         						<option value="semi-ephemeral">Semi-Ephemeral</option>
                         						<option value="ephemeral" selected="selected">Ephemeral</option>
-                     						</select>
-                  						</div>
+                     					</select>
                   					</div>
-                  							
+                  				</div>			
     								<h3 class="form-group-title">Hardware &amp; Storage</h3>
     			 					<div class="form-group">
-                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Instance Type</label>
-                  						<div class="col-sm-9">
-                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_templates" required disabled></select>
-                  						</div>
+                  					<label class="col-sm-3 control-label" for="selecthdpVersion">Instance Type</label>
+                  					<div class="col-sm-9">
+                     					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_templates" required disabled></select>
                   					</div>
-									<h3 class="form-group-title">Security</h3>
+                  				</div>
+								<h3 class="form-group-title">Security</h3>
     								<div class="form-group">
-                  						<label class="col-sm-3 control-label" for="selecthdpVersion">Credentials</label>
-                  						<div class="col-sm-9">
-                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_credentials" required disabled></select>
-                  						</div>
+                  					<label class="col-sm-3 control-label" for="selecthdpVersion">Credentials</label>
+                  					<div class="col-sm-9">
+                     					<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_credentials" required disabled></select>
                   					</div>
+                  				</div>
     							</form>
     							<div id="button_create_cluster">
     								<button id="create_ephemeral_cluster" disabled onclick="createCluster(true)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">Create Cluster</button>
     							</div>
     						</div>
-						</div>	 	
+					</div>	 	
     				</div>
-				</div>
-				<div class="row cards-row"id="clusters"></div>
 			</div>
+			<div class="row cards-row"id="clusters"></div>
 		</div>
 	</div>
-
-<!-- Mainly scripts -->
-<script src="theme1/js/jquery-3.1.1.min.js"></script>
-<script src="theme1/js/bootstrap.min.js"></script>
-<script src="theme1/js/plugins/metisMenu/jquery.metisMenu.js"></script>
-<script src="theme1/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-
-<!-- Custom and plugin javascript -->
-<script src="theme1/js/inspinia.js"></script>
-<script src="theme1/js/plugins/pace/pace.min.js"></script>
-<script src="theme1/js/plugins/jsTree/jstree.min.js"></script>
+</div>
 
 <!-- 
 <script src="theme1/js/highcharts/highcharts.js"></script>
@@ -324,12 +325,6 @@
 <script src="theme1/js/highcharts/highstock.js"></script> 
 <script src="theme1/js/highcharts/highcharts-more.js"></script>
 -->
-
-<!-- Switchery -->
-<script src="theme1/js/plugins/switchery/switchery.js"></script>
-<script src="theme1/js/jquery-ui-1.12.1/jquery-ui.js"></script><!-- Data picker -->
-<script src="theme1/js/plugins/datapicker/bootstrap-datepicker.js"></script>
-   
 
 <script>
 
@@ -440,7 +435,7 @@ var form = document.getElementById('atlas_viewer_container')
 		if(sourceDatasetClusterName == document.getElementById('shared_services_cluster_name').value){
 			atlasViewerHtml = atlasViewerHtml + '<div style="float: right;">'
 											 + '		<button id="access_dataset_button" onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', true)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
-											 + '			Provsion Temp Workspace'
+											 + '			Provision Temp Workspace'
 											 + '		</button>'
 											 + '</div>'
 		}
