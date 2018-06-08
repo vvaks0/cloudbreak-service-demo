@@ -766,7 +766,7 @@ public class Controller{
     		urlString = cloudbreakUrl+cloudbreakApiUriV2+stacksUri;
     		LOG.info("********** Cluster Type:" + type);
     		if (type.equalsIgnoreCase("semi-ephemeral")){    	
-    			blueprint = "TEMP-WORKSPACE-V1.1";
+    			blueprint = "TEMP-WORKSPACE-V1.2";
     			recipeId = createSemiEphemeralRecipe(clusterName, sourceClusterId, sourceDatasetName);
     			recipes += ",\""+recipeId+"\"";
     			workerCount = "3";
@@ -780,7 +780,7 @@ public class Controller{
     			ldapConfigName = "\""+sharedServicesLdap+"\"";
     			mpacks = "";
     		}else if(type.equalsIgnoreCase("dps-managed")) {
-    			blueprint = "DPS-MANAGED-V1.5";
+    			blueprint = "DPS-MANAGED-V1.6";
     			workerCount = "3";
     			if(platform.equalsIgnoreCase("GCP")) {
     				recipes += ",\"dps-dlm-register-cluster-gcp-1-1-0\",\"load-logistics-dataset\"";
@@ -790,7 +790,7 @@ public class Controller{
     				recipes += ",\"dps-dlm-register-cluster-openstack-1-1-0\",\"load-logistics-dataset\"";
     			}
     		}else if(type.equalsIgnoreCase("shared-services")) {
-    			blueprint = "SHARED-SERVICES-V1.17";
+    			blueprint = "SHARED-SERVICES-V1.18";
     			workerCount = "3";
     			if(platform.equalsIgnoreCase("GCP")) {
     				recipes += ",\"dps-dlm-register-cluster-sharedservices-gcp-1-1-0\"";
