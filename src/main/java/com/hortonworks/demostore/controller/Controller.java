@@ -780,7 +780,7 @@ public class Controller{
     			ldapConfigName = "\""+sharedServicesLdap+"\"";
     			mpacks = "";
     		}else if(type.equalsIgnoreCase("dps-managed")) {
-    			blueprint = "DPS-MANAGED-V1.6";
+    			blueprint = "DPS-MANAGED-V1.7";
     			workerCount = "3";
     			if(platform.equalsIgnoreCase("GCP")) {
     				recipes += ",\"dps-dlm-register-cluster-gcp-1-1-0\",\"load-logistics-dataset\"";
