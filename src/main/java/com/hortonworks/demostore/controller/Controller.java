@@ -69,6 +69,7 @@ public class Controller{
 	private String atlasApiPort;
 	private String atlasUrl;
 	private String dpsHost;
+	private String dpsHostHyphen;
 	private String dpsAdminUserName;
 	private String dpsAdminPassword;
 	private String sharedServicesClusterId;
@@ -104,6 +105,13 @@ public class Controller{
 	private String dss_dataset_uri = "/dss/api/dataset"; //2/assets?queryName=&offset=0&limit=20";
 	private String dss_assets_uri = "/dss/api/assets/details";
 	
+	private String mysqlMetastoreRecipeName = "configure-mysql-metastores-";
+	private String postgresMetastoreRecipeName = "configure-postgres-metastores-";
+	private String registerDpsClusterRecipeName = "dps-dlm-register-cluster-";
+	private String registerDpsClusterSharedServicesRecipeName = "dps-dlm-register-cluster-sharedservices-";
+	private String removeDpsClusterRecipeName = "dps-dlm-remove-cluster-";
+	
+	private Map<String,Map<String, String>> rdsServiceMap = new HashMap<String,Map<String, String>>();
 	private String ldapSuffix = "-ldap";
 	private String hiveRdsSuffix = "-hive-metastore";
 	private String rangerRdsSuffix = "-ranger-metastore";
@@ -111,6 +119,8 @@ public class Controller{
 	private String ldapPort = "33389";
 	private String hiveMetastoreRdsPprt = "5432";
 	private String rangerMetastoreRdsPprt = "5432";
+	
+	private String storageBucket = "vvaks";
 	
 	private String publicKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4YhcNwxMvZLyLECWfJyqf5rdk+R+DM2gzt0cEFYu9/SVV3GWAGvESevGCMEZaqapMDWgY+9n5uFgQRKo8UeVH1cJuRqQUZOY44ZiZokiMZ+kkY5rPOj44ArKXvqQDz0DB1EVyMYB8LATjloDtcghl51Z/y2hXMjaxpewYokTh8YTeMPvyBYvvIuRIW0EOMMDLXfR3EXaLwQAtlDjWkQYezFnkNM4lQsYJ50ohb/DA68ZCBhvTYqPYPbFmeNHubt/ymucecDaAJFbwmdHf6j+8xbT/HH/4GbCUXgU9RNCKgJfBlOcgEEBCy0cbg/hFz2sawMA+epuX4OhY2s9atugV cloudbreak";
 
@@ -146,6 +156,7 @@ public class Controller{
         if(env.get("DPS_HOST") != null){
     			dpsHost = (String)env.get("DPS_HOST");
     			dpsUrl = "https://"+dpsHost;
+    			dpsHostHyphen = dpsHost.replaceAll("\\.", "-");
         }
         if(env.get("DPS_ADMIN_USER_NAME") != null){
         		dpsAdminUserName=(String)env.get("DPS_ADMIN_USER_NAME");
@@ -165,24 +176,7 @@ public class Controller{
         }*/
         
 		initializeTrustManager();
-		
-		try {
-			if(dpsUrl != null) {
-				getSharedServicesService();
-			}else {
-				LOG.error("********** Shared Services Host is not configured, please set environment variable DPS_HOST...");
-				System.exit(1);
-			}
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		
+
         atlasUrl = "http://"+atlasApiHost+":"+atlasApiPort;
         cloudbreakUrl = "https://"+cloudbreakApiHost+":"+cloudbreakApiPort;
         cloudbreakAuthUrl = "http://"+cloudbreakAuthHost+":"+cloudbreakAuthPort+"/oauth/authorize?response_type=token&client_id=cloudbreak_shell";
@@ -198,14 +192,13 @@ public class Controller{
 		System.out.println(currentHour+":"+storedHour);
 		if(currentYear >= storedYear && currentDay >= storedDay && currentHour > storedHour){
 			String credentials = "credentials={\"username\":\""+adminUserName+"\",\"password\":\""+adminPassword+"\"}";
+			
 			LOG.info("********************** Controller ()  Credentials : " +credentials);
 			oAuthToken = getToken(cloudbreakAuthUrl, credentials);
-			//System.out.println("********** Auth Token: "+oAuthToken);
+			
 			LOG.debug("********************** Controller ()  Cloudbreak API OAuth Token set : " + oAuthToken);
 			storedHour = currentHour;
 		}
-        
-		
 		/*
         String[] platforms = {"AWS","OPENSTACK"};
         
@@ -221,6 +214,65 @@ public class Controller{
         }*/
         getAllArtifacts();
         System.out.println("********************** Controller ()  Platform Metadata has been loaded: " + platformMetaData);
+        
+        String urlString = cloudbreakUrl+cloudbreakApiUri+stacksUri;
+	    HashMap<String, Object> clusters = new HashMap<String,Object>();
+	    JSONArray clustersJSON = httpGetArray(urlString);
+	    System.out.println("********** Cluster: " + clustersJSON);
+        try {
+			if(dpsUrl != null) {
+				mysqlMetastoreRecipeName += dpsHostHyphen;
+				postgresMetastoreRecipeName += dpsHostHyphen;
+				registerDpsClusterRecipeName += dpsHostHyphen;
+	    			registerDpsClusterSharedServicesRecipeName += dpsHostHyphen;
+	    			removeDpsClusterRecipeName += dpsHostHyphen;
+	        
+	    			if(!platformMetaData.get("recipes").containsKey(mysqlMetastoreRecipeName)) {
+	    				createConfigureMysqlMetastoreRecipe();
+	    			}else {
+	    				LOG.info("********** Recipe " + mysqlMetastoreRecipeName + " already exists");
+	    			}
+	        
+	    			if(!platformMetaData.get("recipes").containsKey(postgresMetastoreRecipeName)) {
+	    				createConfigurePostgresMetastoreRecipe();
+	    			}else {
+	    				LOG.info("********** Recipe " + postgresMetastoreRecipeName + " already exists");
+	    			}
+	        
+	    			if(!platformMetaData.get("recipes").containsKey(registerDpsClusterRecipeName)) {
+	    				createDpsRegisterClusterRecipe(dpsHost);
+	    			}else {
+	    				LOG.info("********** Recipe " + registerDpsClusterRecipeName + " already exists");
+	    			}
+	    			
+	    			if(!platformMetaData.get("recipes").containsKey(registerDpsClusterSharedServicesRecipeName)){
+	    				createDpsRegisterClusterSharedServicesRecipe(dpsHost);
+	    			}else {
+	    				LOG.info("********** Recipe " + registerDpsClusterSharedServicesRecipeName + " already exists");
+	    			}
+	        	
+	    			if(!platformMetaData.get("recipes").containsKey(removeDpsClusterRecipeName)) {
+	    				createDpsRemoveClusterRecipe(dpsHost);
+	    			}else {
+	    				LOG.info("********** Recipe " +removeDpsClusterRecipeName + " already exists");
+	    			}
+	    			for(int i=0;i<clustersJSON.length();i++)
+	    				getRdsServices(clustersJSON.getJSONObject(i));
+	    			
+				getSharedServicesService();
+			}else {
+				LOG.error("********** DPS Host is not configured, please set environment variable DPS_HOST if DPS functionality is required...");
+				//System.exit(1);
+			}
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@RequestMapping(value="/getPlatformComponents", method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE})
@@ -244,7 +296,7 @@ public class Controller{
 		 }
 		 
 		 //platformComponents.put("blueprints", getBlueprints());
-	     platformComponents.put("recipes", getRecipes());
+	     platformMetaData.put("recipes", getRecipes());
     }
 	
 	@RequestMapping(value="/refreshAllClusters", method=RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE})
@@ -267,8 +319,8 @@ public class Controller{
 	    JSONArray clustersJSON = httpGetArray(urlString);
 	    System.out.println("********** Cluster: " + clustersJSON);
 	    try {
-			getSharedServicesService();
-			
+	    		getSharedServicesService();
+			/*
 			if(sharedServicesAmbariHost != null && sharedServicesLdap == null) {
 				JSONObject ldapResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+ldapUri+"/"+sharedServicesClusterName+ldapSuffix);
 				LOG.info("********** Checking for Shared Services Ldap: " + ldapResult);
@@ -292,7 +344,7 @@ public class Controller{
 					createSharedServicesRangerMetastoreRds(sharedServicesClusterName, sharedServicesAmbariHost, rangerMetastoreRdsPprt);
 				}
 				sharedServicesRangerMetastoreRds = sharedServicesClusterName+rangerRdsSuffix;
-			}
+			}*/
 		} catch (JsonParseException e1) {
 			e1.printStackTrace();
 		} catch (JsonMappingException e1) {
@@ -306,15 +358,18 @@ public class Controller{
 	    		HashMap<String, Object> cluster = new HashMap<String,Object>();
 	    		String clusterType = null;
 	    		boolean isSharedServices = false;
+	    		
 	    		try {
+		    		getRdsServices(clustersJSON.getJSONObject(i));
+		    		
 	    			String blueprintName = clustersJSON.getJSONObject(i).getJSONObject("cluster").getJSONObject("blueprint").getString("name");
 	    			if(blueprintName != null){
 	    				if(blueprintName.split("_v")[0].equalsIgnoreCase("hdp-hdf-multi-node") || (blueprintName.split("_V")[0].equalsIgnoreCase("hdp-hdf-multi-node"))){
 	    					clusterType = "Connected Platform";
 	    				}else if(blueprintName.split("_v")[0].equalsIgnoreCase("historian-multi-node") || blueprintName.split("_v")[0].equalsIgnoreCase("historian-multi-node-scalable")){
 	    					clusterType = "Historian";
-	    				}else if (blueprintName.split("_v")[0].equalsIgnoreCase("shared-services") || (blueprintName.split("-V")[0].equalsIgnoreCase("shared-services"))){
-	    					clusterType = "Shared Services";
+	    				}else if (blueprintName.split("_v")[0].equalsIgnoreCase("shared-services") || (blueprintName.split("-V")[0].equalsIgnoreCase("shared-services")) || (blueprintName.split("-V")[0].equalsIgnoreCase("datalake-service"))){
+	    					clusterType = "DataLake Services";
 	    					isSharedServices = true;
 	    				}else if (blueprintName.split("_v")[0].equalsIgnoreCase("dps-managed") || (blueprintName.split("-V")[0].equalsIgnoreCase("dps-managed"))){
 	    					clusterType = "DPS Managed";  		
@@ -347,7 +402,8 @@ public class Controller{
 	    				}else if(ambariServerIp.equalsIgnoreCase("PENDING")){
 	    					clusterStatus = clustersJSON.getJSONObject(i).getString("statusReason");
 	    				}else{ 
-	    					clusterStatus = getLastAmbariTask(ambariServerIp, clusterName);
+	    					clusterStatus = clustersJSON.getJSONObject(i).getString("statusReason");
+	    					//clusterStatus = getLastAmbariTask(ambariServerIp, clusterName);
 	    				}
 	    				cluster.put("clusterStatus", clusterStatus);
 	    				cluster.put("isSharedServices", isSharedServices);
@@ -356,7 +412,9 @@ public class Controller{
 	    		} catch (JSONException e) {
 	    			e.printStackTrace();
 	    		} 
-	    }	
+	    }
+	    LOG.info("********** RDS Services: " + rdsServiceMap);
+	    
 	    return clusters;
     }
 	
@@ -662,13 +720,22 @@ public class Controller{
 		String imageId = null;
 		String ambariRepoBaseUrl = null;
 		String stackDefUrl = null;
-		String s3ArnRole = "";
+		String s3SecRole = "null";
+		String adlsSecRole = "null";
+		String wasbSecRole = "null";
+		String gcsSecRole = "null";
 		String workerCount = "1";
+		String clusterTags = "";
     		//String ambariRepoVersion = "2.6.1.3";
 		String ambariRepoVersion = "2.6.2.0";
     		String ambariRepoGpgKey = "http://public-repo-1.hortonworks.com/ambari/centos7/RPM-GPG-KEY/RPM-GPG-KEY-Jenkins";
     		String hdpPlatformVerson = "HDP 2.6";
     		String stackMajorVersion = "2.6";
+    		String auditLocation = "";
+    		String warehouseLocation = "";
+    		String replLocation = "";
+    		String storageConfig = "";
+    		String gatewayConfig = "";
     		//String stackRepoVersion = "2.6.4.5-2";
     		String stackRepoVersion = "2.6.5.0-292";
     		if(platform.equalsIgnoreCase("AWS")) {
@@ -676,7 +743,6 @@ public class Controller{
         		ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.6.2.0";
         		//stackDefUrl = "http://private-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.4.5-2/HDP-2.6.4.5-2.xml";
         		stackDefUrl = "http://public-repo-1.hortonworks.com/HDP/centos6/2.x/updates/2.6.5.0/HDP-2.6.5.0-292.xml";
-        		s3ArnRole = "arn:aws:iam::081339556850:instance-profile/shared-services-s3-access";
     		}else {
     			//ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.3";
     			ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.2.0";
@@ -694,7 +760,7 @@ public class Controller{
     		System.out.println(platform);	
     		if (platform.equalsIgnoreCase("AWS")){
     		  region="us-east-1";
-    		  zone="null";
+    		  zone="us-east-1b";
     		  variant="AWS";
     		  stackOs = "centos6";
     		  //securityGroupId = (String) ((HashMap)platformMetaData.get(platform).get("securityGroups")).get("aws-connected-platform-all-services-v1");
@@ -704,12 +770,18 @@ public class Controller{
     		  networkId = null;
     		  subnetId = "subnet-dff56386";
     		  //imageId = "63cdb3bc-28a6-4cea-67e4-9842fdeeaefb"; //HDP 2.6.4.5 image
+    		  //imageId = "02510145-0943-42a3-7271-8d19e5f87917"; //HDP 2.6.5.0 image
     		  imageId = "0f575e42-9d90-4f85-5f8a-bdced2221dc3"; //Base Image
     		  instanceType = "m3.xlarge";
     		  volumeType = "standard";
     		  volumeCount = "1";
-    		  recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-aws-1-1-0\"";
+    		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-1-0\",\""+removeDpsClusterRecipeName+"\"";
+    		  //recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-aws-1-1-0\"";
     		  mpacks = "{\"name\":\"dlm-beacon-centos6-1-1-0\"},{\"name\":\"dss-dpprofiler-centos6-1-0-0\"}";
+    		  auditLocation = "s3a://" + storageBucket + "/" + clusterName + "/apps/ranger/audit/" + clusterName;
+  		  warehouseLocation = "s3a://" + storageBucket + "/" + clusterName + "/apps/hive/warehouse";
+  		  replLocation = "s3a://" + storageBucket + "/" + clusterName;
+  		  s3SecRole = "{\"instanceProfile\": \"arn:aws:iam::081339556850:instance-profile\\/shared-services-s3-access\"}";
     		}else if (platform.equalsIgnoreCase("OPENSTACK")){
     		  region="RegionOne";
     		  zone="SE";
@@ -720,11 +792,13 @@ public class Controller{
     		  networkId = "71a870bb-191c-4abe-bf02-ece2e9b3345c";
     		  subnetId = "aa7c8bb9-0152-46b9-8596-935baca704a0";
     		  //imageId = "74d99079-f5d0-4470-78b3-11ceaf944069"; //HDP 2.6.4.5 image
+    		  //imageId = "f2dfe452-dd49-4885-5058-7d198d3e3d5c"; //HDP 2.6.5.0 image
     		  imageId = "083f7289-876f-4267-436b-ece5504adb06"; //Base Image
     		  instanceType = "m3.xlarege";
     		  volumeType = "HDD";
     		  volumeCount = "0";
-    		  recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-openstack-1-1-0\"";
+    		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-1-0\",\""+removeDpsClusterRecipeName+"\"";
+    		  //recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-openstack-1-1-0\"";
     		}else if (platform.equalsIgnoreCase("GCP")){
   		  region="us-east1";
   		  zone="us-east1-b";
@@ -735,11 +809,17 @@ public class Controller{
   		  networkId = "default";
   		  subnetId = "default";
   		  //imageId = "5a25167d-656a-4621-4755-0e8e6381e4fe"; //HDP 2.6.4.5 image
+  		  //imageId = "14eacf1a-cd53-452c-5ecc-0ae227054b00"; //HDP 2.6.5.0 image
   		  imageId = "4102fae2-5de9-4bbd-4c6c-de663c87f6d0"; //Base Image
   		  instanceType = "n1-standard-4";
   		  volumeType = "pd-standard";
   		  volumeCount = "1";
-  		  recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-gcp-1-1-0\"";  
+  		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-1-0\",\""+removeDpsClusterRecipeName+"\"";
+  		  //recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-gcp-1-1-0\"";
+  		  auditLocation = "gcs://" + storageBucket + "/"+clusterName+"\"/apps/ranger/audit/" + clusterName;
+		  warehouseLocation = "gcs://" + storageBucket + "/"+clusterName+"/apps/hive/warehouse";
+		  replLocation = "";
+		  gcsSecRole = "{\"instanceProfile\": \"arn:aws:iam::081339556850:instance-profile\\/shared-services-s3-access\"}";
     		}else{
     			System.out.println("********************Invalid cloud platform requested...");
     			System.out.println("********************Valid platform types are: AWS, OPENSTACK, GCP");
@@ -761,15 +841,33 @@ public class Controller{
     		return null;
     	}
     	*/
-    	
     		String stackDef = null;
     		urlString = cloudbreakUrl+cloudbreakApiUriV2+stacksUri;
     		LOG.info("********** Cluster Type:" + type);
     		if (type.equalsIgnoreCase("semi-ephemeral")){    	
-    			blueprint = "TEMP-WORKSPACE-V1.2";
+    			blueprint = "TEMP-WORKSPACE-V2.0";
+    			ldapConfigName = "\""+rdsServiceMap.get(platform).get("ldap")+"\"";
+    			//rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
     			recipeId = createSemiEphemeralRecipe(clusterName, sourceClusterId, sourceDatasetName);
     			recipes += ",\""+recipeId+"\"";
     			workerCount = "3";
+    			storageConfig = "{\n" + 
+	    				"          \"value\": \"" + warehouseLocation + "\",\n" + 
+	    				"          \"propertyFile\": \"hive-site\",\n" + 
+	    				"          \"propertyName\": \"hive.repl.replica.functions.root.dir\"\n" + 
+	    				"        }";
+    			gatewayConfig =  
+    					"		 \"path\": \""+clusterName+"\",\n" + 
+    					"        \"topologies\": [\n" + 
+    					"          {\n" + 
+    					"            \"topologyName\": \"dp-proxy\",\n" + 
+    					"            \"exposedServices\": [\"AMBARI\",\"WEBHDFS\",\"HDFSUI\",\"YARNUI\",\"JOBHISTORYUI\",\"HIVE\",\"HIVE_INTERACTIVE\"," +
+    					"			 \"ATLAS\",\"SPARKHISTORYUI\",\"ZEPPELIN\",\"RANGERUI\",\"PROFILER-AGENT\",\"BEACON\"]\n" + 
+    					"          }\n" + 
+    					"        ],\n" + 
+    					"        \"ssoProvider\": \"/"+clusterName+"/sso/api/v1/websso\",\n" + 
+    					"        \"gatewayType\": \"INDIVIDUAL\",\n" + 
+    					"        \"ssoType\": \"SSO_PROVIDER\"\n";
     		}else if(type.equalsIgnoreCase("ephemeral")) {
     			blueprint = "EPHEMERAL-V1.5";
     			//recipeId = createEphemeralRecipe(clusterName, sharedServicesIp, targetBucket, "sharedservices_hive").toString();
@@ -779,35 +877,98 @@ public class Controller{
     			rdsConfigs = "\""+sharedServicesHiveMetastoreRds+"\", \""+sharedServicesRangerMetastoreRds+"\"";
     			ldapConfigName = "\""+sharedServicesLdap+"\"";
     			mpacks = "";
+    		}else if(type.equalsIgnoreCase("rds-service")) {
+    			blueprint = "RDS-METASTORE-V1.2";
+    			recipes = "\""+postgresMetastoreRecipeName+"\"";
+    			mpacks = "";
+    			clusterTags = "\"rds-service\": \"true\"";
     		}else if(type.equalsIgnoreCase("dps-managed")) {
-    			blueprint = "DPS-MANAGED-V1.7";
+    			blueprint = "DPS-MANAGED-V2.2";
     			workerCount = "3";
+    			ldapConfigName = "\""+rdsServiceMap.get(platform).get("ldap")+"\"";
+    			//rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
+    			recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    			storageConfig = "{\n" + 
+	    				"          \"value\": \"" + warehouseLocation + "\",\n" + 
+	    				"          \"propertyFile\": \"hive-site\",\n" + 
+	    				"          \"propertyName\": \"hive.repl.replica.functions.root.dir\"\n" + 
+	    				"        }";
+    			gatewayConfig =  
+    					"		 \"path\": \""+clusterName+"\",\n" + 
+    					"        \"topologies\": [\n" + 
+    					"          {\n" + 
+    					"            \"topologyName\": \"dp-proxy\",\n" + 
+    					"            \"exposedServices\": [\"AMBARI\",\"WEBHDFS\",\"HDFSUI\",\"YARNUI\",\"JOBHISTORYUI\",\"HIVE\",\"HIVE_INTERACTIVE\"," +
+    					"			 \"ATLAS\",\"SPARKHISTORYUI\",\"ZEPPELIN\",\"RANGERUI\",\"PROFILER-AGENT\",\"BEACON\"]\n" + 
+    					"          }\n" + 
+    					"        ],\n" + 
+    					"        \"ssoProvider\": \"/"+clusterName+"/sso/api/v1/websso\",\n" + 
+    					"        \"gatewayType\": \"INDIVIDUAL\",\n" + 
+    					"        \"ssoType\": \"SSO_PROVIDER\"\n";
+    			/*
     			if(platform.equalsIgnoreCase("GCP")) {
-    				recipes += ",\"dps-dlm-register-cluster-gcp-1-1-0\",\"load-logistics-dataset\"";
+    				recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    				//recipes += ",\"dps-dlm-register-cluster-gcp-1-1-0\",\"load-logistics-dataset\"";
     			}else if(platform.equalsIgnoreCase("AWS")) {
-    				recipes += ",\"dps-dlm-register-cluster-aws-1-1-0\",\"load-logistics-dataset\"";
+    				recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    				//recipes += ",\"dps-dlm-register-cluster-aws-1-1-0\",\"load-logistics-dataset\"";
     			}else if(platform.equalsIgnoreCase("OPENSTACK")) {
-    				recipes += ",\"dps-dlm-register-cluster-openstack-1-1-0\",\"load-logistics-dataset\"";
-    			}
+    				recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    				//recipes += ",\"dps-dlm-register-cluster-openstack-1-1-0\",\"load-logistics-dataset\"";
+    			}*/
     		}else if(type.equalsIgnoreCase("shared-services")) {
-    			blueprint = "SHARED-SERVICES-V1.18";
+    			blueprint = "DATALAKE-SERVICE-V2.2";
     			workerCount = "3";
+    			ldapConfigName = "\""+rdsServiceMap.get(platform).get("ldap")+"\"";
+    			rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
+    			recipes+=",\""+registerDpsClusterSharedServicesRecipeName+"\"";
+    			clusterTags = "\"shared-services\": \"true\"";
+    			storageConfig = "{\n" + 
+    	    				"          \"value\": \"" + warehouseLocation + "\",\n" + 
+    	    				"          \"propertyFile\": \"hive-site\",\n" + 
+    	    				"          \"propertyName\": \"hive.metastore.warehouse.dir\"\n" + 
+    	    				"        },\n" + 
+    	    				"        {\n" + 
+    	    				"          \"value\": \"" + auditLocation + "\",\n" + 
+    	    				"          \"propertyFile\": \"ranger-env\",\n" + 
+    	    				"          \"propertyName\": \"xasecure.audit.destination.hdfs.dir\"\n" + 
+    	    				"        },\n" +
+    	    				"        {\n " +
+    	    				"		   \"value\": \"" + replLocation + "\",\n" + 
+    	    				"          \"propertyFile\": \"hive-site\",\n" + 
+    	    				"          \"propertyName\": \"hive.repl.replica.functions.root.dir\"\n" + 
+    	    				"        }\n";
+    			gatewayConfig = 
+    					"		 \"path\": \"" + clusterName + "\",\n" + 
+    					"        \"topologies\": [\n" + 
+    					"          {\n" + 
+    					"            \"topologyName\": \"dp-proxy\",\n" + 
+    					"            \"exposedServices\": [\"AMBARI\",\"YARNUI\",\"JOBHISTORYUI\",\"ATLAS\",\"SPARKHISTORYUI\",\"RANGERUI\",\"PROFILER-AGENT\",\"BEACON\"]\n" + 
+    					"          }\n" + 
+    					"        ],\n" + 
+    					"        \"ssoProvider\": \"/" + clusterName + "/sso/api/v1/websso\",\n" + 
+    					"        \"gatewayType\": \"INDIVIDUAL\",\n" + 
+    					"        \"ssoType\": \"SSO_PROVIDER\"\n";
+    			/*
     			if(platform.equalsIgnoreCase("GCP")) {
-    				recipes += ",\"dps-dlm-register-cluster-sharedservices-gcp-1-1-0\"";
+    				recipes+=",\""+registerDpsClusterSharedServicesRecipeName+"\"";
+    				//recipes += ",\"dps-dlm-register-cluster-sharedservices-gcp-1-1-0\"";
     			}else if(platform.equalsIgnoreCase("AWS")) {
-    				recipes += ",\"dps-dlm-register-cluster-sharedservices-aws-1-1-0\"";
+    				recipes+=",\""+registerDpsClusterSharedServicesRecipeName+"\"";
+    				//recipes += ",\"dps-dlm-register-cluster-sharedservices-aws-1-1-0\"";
     			}else if(platform.equalsIgnoreCase("OPENSTACK")) {
-    				recipes += ",\"dps-dlm-register-cluster-sharedservices-openstack-1-1-0\"";
-    			}	
+    				recipes+=",\""+registerDpsClusterSharedServicesRecipeName+"\"";
+    				//recipes += ",\"dps-dlm-register-cluster-sharedservices-openstack-1-1-0\"";
+    			}	*/
     		}
     		
     		stackDef = "" +
     				"{\n" + 
     				"  \"general\": {\"credentialName\": \""+credentialId+"\",\"name\": \""+clusterName+"\"},\n" + 
     				"  \"placement\": {\"region\": \""+region+"\",\"availabilityZone\": \""+zone+"\"},\n" + 
-    				"  \"tags\": {\"userDefinedTags\": {}},\n" + 
+    				"  \"tags\": {\"userDefinedTags\": {"+clusterTags+"}},\n" + 
     				"  \"cluster\": {\n" + 
-    				"  	 \"sharedService\": {"+sharedServices+"}," +
+    				"  	 \"sharedService\": {"+sharedServices+"},\n" +
     				"    \"ambari\": {\n" + 
     				"      \"blueprintName\": \""+blueprint+"\",\n" + 
     				"      \"platformVersion\": \""+hdpPlatformVerson+"\",\n" + 
@@ -827,14 +988,18 @@ public class Controller{
     				"        \"mpacks\": ["+mpacks+"]\n" + 
     				"      },\n" + 
     				"      \"userName\": \"admin\",\n" + 
-    				"      \"password\": \"admin\",\n" + 
-    				"      \"gateway\": {\n" + 
-    				"        \"enableGateway\": false,\n" + 
-    				"        \"gatewayType\": \"INDIVIDUAL\"\n" + 
-    				"      },\n" + 
+    				"      \"password\": \"admin-password1\",\n" + 
+    				"      \"gateway\": {"+gatewayConfig+"},\n" + 
     				"      \"validateBlueprint\": false,\n" + 
     				"      \"ambariSecurityMasterKey\": null\n" + 
-    				"    },\n" + 
+    				"    },\n" +
+    				"	\"cloudStorage\": {\n" + 
+    				"      \"locations\": [" + storageConfig + "],\n" + 
+    				"      \"s3\": " + s3SecRole + ",\n" + 
+    				"      \"adls\": "+ adlsSecRole +",\n" + 
+    				"      \"wasb\": " + wasbSecRole + ",\n" + 
+    				"      \"gcs\": " + gcsSecRole + "\n" + 
+    				"    }," +
     				"    \"rdsConfigNames\": ["+rdsConfigs+"],\n" + 
     				"    \"ldapConfigName\": "+ldapConfigName+",\n" + 
     				"    \"proxyName\": null\n" + 
@@ -879,7 +1044,7 @@ public class Controller{
     				"    }\n" + 
     				"  ],\n" + 
     				"  \"network\": {\n" + 
-    				"      \"parameters\": {\"vpcId\":\""+vpcId+"\",\"networkId\":\""+networkId+"\",\"subnetId\":\""+subnetId+"\"," + 
+    				"      \"parameters\": {\"vpcId\":\""+vpcId+"\",\"networkId\":\""+networkId+"\",\"subnetId\":\""+subnetId+"\",\n" + 
     				"      \"publicNetId\": null,\n" + 
     				"      \"routerId\": null,\n" + 
     				"      \"internetGatewayId\": null,\n" +
@@ -887,8 +1052,8 @@ public class Controller{
     				"    },\n" + 
     				"    \"subnetCIDR\": null\n" + 
     				"  },\n" + 
-    				"  \"stackAuthentication\": {\"publicKeyId\": \"field\", \"publicKey\": \""+publicKey+"\"},\n" +
-    				"  \"parameters\":{\"instanceProfileStrategy\":\"USE_EXISTING\",\"instanceProfile\":\""+s3ArnRole+"\"}\n" +
+    				"  \"stackAuthentication\": {\"publicKeyId\": \"field\", \"publicKey\": \""+publicKey+"\"}\n" +
+    				//"  \"parameters\":{\"instanceProfileStrategy\":\"USE_EXISTING\",\"instanceProfile\":\""+secRole+"\"}\n" +
     				"}";
 
     		System.out.println("********** Stack Def:" + stackDef + " to " + urlString);
@@ -1201,6 +1366,149 @@ public class Controller{
     		return recipes;
     }
     
+    private HashMap<String, Object> createDpsRegisterClusterRecipe(String dpsHostIp) {
+		HashMap<String, Object> recipes = new HashMap<String, Object>();
+		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+	
+		String recipeContent = "#!/bin/bash \n"+
+			 		 "#!/bin/bash\n" + 
+			 		 "yum install -y git\n" + 
+			 		 "git clone https://github.com/vakshorton/CloudBreakArtifacts\n" + 
+			 		 "CloudBreakArtifacts/recipes/dps_dlm_register_cluster.py false " + dpsHostIp;
+	
+		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
+	
+		String payload = "{\"name\":\""+registerDpsClusterRecipeName+"\",\"description\": \"Register cluster in DPS\",\"recipeType\":\"POST_CLUSTER_INSTALL\",\"content\": \""+encodedContent+"\",\"uri\": null}";
+		System.out.println("********** Creating Recipe payload: "+payload);
+	
+		JSONObject recipesJSON = httpPostObject(urlString, payload);
+		try {
+			String recipe_id = recipesJSON.getString("id");
+			String recipe_name = recipesJSON.getString("name");
+			System.out.println("********** " +recipe_id+" - "+recipe_name);
+			recipes.put(recipe_name,recipe_id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return recipes;
+    }
+    
+    private HashMap<String, Object> createDpsRegisterClusterSharedServicesRecipe(String dpsHostIp) {
+		HashMap<String, Object> recipes = new HashMap<String, Object>();
+		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+	
+		String recipeContent = "#!/bin/bash \n"+
+			 		 "#!/bin/bash\n" + 
+			 		 "yum install -y git\n" + 
+			 		 "git clone https://github.com/vakshorton/CloudBreakArtifacts\n" + 
+			 		 "CloudBreakArtifacts/recipes/dps_dlm_register_cluster.py true " + dpsHostIp;
+	
+		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
+	
+		String payload = "{\"name\":\""+registerDpsClusterSharedServicesRecipeName+"\",\"description\": \"Register Shared Services cluster in DPS\",\"recipeType\":\"POST_CLUSTER_INSTALL\",\"content\": \""+encodedContent+"\",\"uri\": null}";
+		System.out.println("********** Creating Recipe payload: "+payload);
+	
+		JSONObject recipesJSON = httpPostObject(urlString, payload);
+		try {
+			String recipe_id = recipesJSON.getString("id");
+			String recipe_name = recipesJSON.getString("name");
+			System.out.println("********** " +recipe_id+" - "+recipe_name);
+			recipes.put(recipe_name,recipe_id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return recipes;
+    }
+    
+    private HashMap<String, Object> createDpsRemoveClusterRecipe(String dpsHostIp) {
+		HashMap<String, Object> recipes = new HashMap<String, Object>();
+		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+	
+		String recipeContent = "#!/bin/bash \n"+
+			 		 "#!/bin/bash\n" + 
+			 		 "yum install -y git\n" + 
+			 		 "git clone https://github.com/vakshorton/CloudBreakArtifacts\n" + 
+			 		 "CloudBreakArtifacts/recipes/dps_dlm_remove_cluster.py " + dpsHostIp;
+	
+		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
+	
+		String payload = "{\"name\":\""+removeDpsClusterRecipeName+"\",\"description\": \"Register Shared Services cluster in DPS\",\"recipeType\":\"PRE_TERMINATION\",\"content\": \""+encodedContent+"\",\"uri\": null}";
+		System.out.println("********** Creating Recipe payload: "+payload);
+	
+		JSONObject recipesJSON = httpPostObject(urlString, payload);
+		try {
+			String recipe_id = recipesJSON.getString("id");
+			String recipe_name = recipesJSON.getString("name");
+			System.out.println("********** " +recipe_id+" - "+recipe_name);
+			recipes.put(recipe_name,recipe_id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return recipes;
+    }
+    
+    private HashMap<String, Object> createConfigurePostgresMetastoreRecipe() {
+		HashMap<String, Object> recipes = new HashMap<String, Object>();
+		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+	
+		String recipeContent = "#!/bin/bash\n" + 
+				"yum install -y git\n" + 
+				"git clone https://github.com/vakshorton/CloudBreakArtifacts\n" + 
+				"CloudBreakArtifacts/recipes/configure-postgres-metastores.sh " + dpsHost;
+	
+		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
+	
+		String payload = "{\"name\":\""+postgresMetastoreRecipeName+"\",\"description\": \"Configure Postgres Metastores for Ranger and Hive\",\"recipeType\":\"PRE_AMBARI_START\",\"content\": \""+encodedContent+"\",\"uri\": null}";
+		System.out.println("********** Creating Recipe payload: "+payload);
+		
+		JSONObject recipesJSON = httpPostObject(urlString, payload);
+		try {
+			String recipe_id = recipesJSON.getString("id");
+			String recipe_name = recipesJSON.getString("name");
+			System.out.println("********** " +recipe_id+" - "+recipe_name);
+			recipes.put(recipe_name,recipe_id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return recipes;
+    }
+    
+    private HashMap<String, Object> createConfigureMysqlMetastoreRecipe() {
+		HashMap<String, Object> recipes = new HashMap<String, Object>();
+		String urlString = cloudbreakUrl+cloudbreakApiUri+"/recipes/user";
+	
+		String recipeContent = "#!/bin/bash\n" + 
+				"yum install -y git\n" + 
+				"git clone https://github.com/vakshorton/CloudBreakArtifacts\n" + 
+				"CloudBreakArtifacts/recipes/configure-mysql-metastores.sh " + dpsHost;
+	
+		String encodedContent = Bytes.toString(Base64.encodeBase64(recipeContent.getBytes())); 
+		System.out.println("********** Creating Recipe content: "+recipeContent+": Base64 encoded: "+encodedContent);
+	
+		String payload = "{\"name\":\""+mysqlMetastoreRecipeName+"\",\"description\": \"Configure Mysql Metastores for Ranger and Hive\",\"recipeType\":\"PRE_AMBARI_START\",\"content\": \""+encodedContent+"\",\"uri\": null}";
+		System.out.println("********** Creating Recipe payload: "+payload);
+	
+		JSONObject recipesJSON = httpPostObject(urlString, payload);
+		try {
+			String recipe_id = recipesJSON.getString("id");
+			String recipe_name = recipesJSON.getString("name");
+			System.out.println("********** " +recipe_id+" - "+recipe_name);
+			recipes.put(recipe_name,recipe_id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return recipes;
+    }
+    
     private JSONObject createSharedServicesLdap(String hostName, String hostAddress, String ldapPort) {
     		JSONObject response = null;
     		
@@ -1213,11 +1521,12 @@ public class Controller{
     				"  \"protocol\": \"LDAP\",\n" + 
     				"  \"bindDn\": \"uid=admin,ou=people,dc=hadoop,dc=apache,dc=org\",\n" + 
     				"  \"domain\": \"\",\n" + 
-    				"  \"bindPassword\": \"admin-password\",\n" + 
+    				"  \"bindPassword\": \"admin-password1\",\n" + 
     				"  \"adminGroup\": \"\",\n" + 
     				"  \"userSearchBase\": \"ou=people,dc=hadoop,dc=apache,dc=org\",\n" + 
     				"  \"userObjectClass\": \"person\",\n" + 
     				"  \"userNameAttribute\": \"uid\",\n" + 
+    				"  \"userDnPattern\": \"uid={0},ou=people,dc=hadoop,dc=apache,dc=org\",\n"+
     				"  \"groupSearchBase\": \"ou=groups,dc=hadoop,dc=apache,dc=org\",\n" + 
     				"  \"groupObjectClass\": \"groupOfNames\",\n" + 
     				"  \"groupNameAttribute\": \"cn\",\n" + 
@@ -1256,7 +1565,7 @@ public class Controller{
 		String urlString = cloudbreakUrl+cloudbreakApiUri+rdsUri;
 		
 		String payload = "{\n" + 
-				"  \"connectionURL\": \"jdbc:postgresql://"+hostAddress+":"+metastorePort+"/ragnger\",\n" + 
+				"  \"connectionURL\": \"jdbc:postgresql://"+hostAddress+":"+metastorePort+"/ranger\",\n" + 
 				"  \"name\": \""+hostName+rangerRdsSuffix+"\",\n" + 
 				"  \"type\": \"RANGER\",\n" + 
 				"  \"databaseEngine\": \"POSTGRES\",\n" +
@@ -1268,6 +1577,43 @@ public class Controller{
 		response = httpPostObject(urlString, payload);
 		
 		return response;
+    }
+    
+    private void getRdsServices(JSONObject clusterJSON) throws JSONException {
+		JSONObject currentClusterTags = clusterJSON.getJSONObject("userDefinedTags");
+		String isRdsService = null;
+		if(!currentClusterTags.isNull("rds-service")) {
+			isRdsService = currentClusterTags.getString("rds-service");
+		}
+		String currentRdsClusterName = clusterJSON.getString("name");
+		String currentRdsHostIp = clusterJSON.getJSONObject("cluster").getString("ambariServerIp");
+		String currentRdsPlatformVariant = clusterJSON.getString("platformVariant");
+		//LOG.info("********** getRDSServices() Cluster JSON: " + clusterJSON); 	
+		Map<String,String> rdsMap = new HashMap<String,String>();
+		if(isRdsService != null && isRdsService.equalsIgnoreCase("true") && !rdsServiceMap.containsKey(currentRdsPlatformVariant)){
+			rdsMap.put("name", currentRdsClusterName);
+			JSONObject ldapResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+ldapUri+"/"+currentRdsClusterName+ldapSuffix);
+			LOG.info("********** Checking for Shared Services Ldap: " + ldapResult);
+			if(ldapResult.isNull("name")) {
+				createSharedServicesLdap(currentRdsClusterName, currentRdsHostIp, ldapPort);
+			}
+			rdsMap.put("ldap", currentRdsClusterName+ldapSuffix);
+				
+			JSONObject hiveMetastoreResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+rdsUri+"/"+currentRdsClusterName+hiveRdsSuffix);
+			LOG.info("********** Checking for Shared Services Hive Metastore: " + hiveMetastoreResult);
+			if(hiveMetastoreResult.isNull("name")) {				
+				createSharedServicesHiveMetastoreRds(currentRdsClusterName, currentRdsHostIp, hiveMetastoreRdsPprt);
+			}
+			rdsMap.put("hive", currentRdsClusterName+hiveRdsSuffix);
+
+			JSONObject rangerMetastoreResult = httpGetObject(cloudbreakUrl+cloudbreakApiUri+rdsUri+"/"+currentRdsClusterName+rangerRdsSuffix);
+			LOG.info("********** Checking for Shared Services Ranger Metastore: " + rangerMetastoreResult);
+			if(rangerMetastoreResult.isNull("name")) {				
+				createSharedServicesRangerMetastoreRds(currentRdsClusterName, currentRdsHostIp, rangerMetastoreRdsPprt);
+			}
+			rdsMap.put("ranger", currentRdsClusterName+rangerRdsSuffix);
+			rdsServiceMap.put(currentRdsPlatformVariant, rdsMap);
+		}
     }
     
     private Map<String,String> getSharedServicesService() throws JsonParseException, JsonMappingException, IOException, JSONException {
@@ -1454,6 +1800,8 @@ public class Controller{
     
     private JSONObject httpPostObject(String urlString, String payload) {
     	JSONObject response = null;
+    	
+    	LOG.info("********** POST to: " + urlString + " Payload: " + payload);
     	try {
             URL url = new URL (urlString);
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
