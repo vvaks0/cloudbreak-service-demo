@@ -207,10 +207,11 @@
                   						<label class="col-sm-3 control-label" for="selecthdpVersion">Cluster Type</label>
                   						<div class="col-sm-9">
                      						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="cluster_type" required disabled>
-                        						<option value="dps-managed">DPS Managed Cluster</option>
-                        						<option value="shared-services">Shared Services</option>
+                        						<!-- <option value="dps-managed">DPS Managed Cluster</option>
+                        						<option value="shared-services">Shared Services</option> -->
+                        						<option value="rds-service">RDS Services</option>
                         						<option value="connected-platform" selected="selected">Connected Platform</option>
-                        						<option value="historian">Historian</option>
+                        						<!--  <option value="historian">Historian</option> -->
                      						</select>
                   						</div>
                   					</div>	
@@ -245,7 +246,7 @@
             						<div class="form-group">
                   						<label class="col-sm-3 control-label" for="selecthdpVersion">Target Cloud Platform</label>
                   						<div class="col-sm-9">
-                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_platform" onChange="populateEphemeralClusterOptions()" required>
+                     						<select class="form-control ng-pristine ng-untouched ng-not-empty ng-valid ng-valid-required" id="ephemeral_platform" onChange="populateEphemeralClusterOptions()" required disabled>
                         							<option value="" selected="selected">Select Target Cloud</option>
                         							<option value="AWS">AWS</option>
                         							<option value="GCP">GCP</option>
@@ -274,7 +275,8 @@
                   				</div> -->
                   				<input type="hidden" id="shared_services_status" name="shared_services_status" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
                   				<input type="hidden" id="shared_services_cluster_name" name="shared_services_cluster_name" value="false" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
-                  				<input type="hidden" id="ephemeral_replication_source_clusterId" name="replicationSourceClusterId" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">	
+                  				<input type="hidden" id="ephemeral_replication_source_clusterId" name="replicationSourceClusterId" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">
+                  				<input type="hidden" id="ephemeral_replication_source_clusterName" name="replicationSourceClusterName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">	
                   				<input type="hidden" id="ephemeral_replication_source_dataset_name" name="replicationDatasetName" class="form-control red-placeholder ng-pristine ng-untouched ng-empty ng-invalid ng-invalid-required ng-valid-pattern ng-valid-minlength ng-valid-maxlength alert-danger" disabled style=" background-size: 16px 18px; background-position: 98% 50%; cursor: auto;">		
     								<div class="form-group required" id="ephemeral_general_info_body">
                   					<label class="col-sm-3 control-label" for="clusterName">Cluster Name</label>
@@ -330,14 +332,15 @@
 
 function displayWizard() {
 	var form = document.getElementById('form_container')
-	
+	//console.log("RDS: " + rds['AWS']['hive'])
+	//console.log("Datalakes: " + datalakes)
 	if (form.style.display == 'none')
 		form.style.display = 'block'
 	else
 		form.style.display = 'none'
 }
 
-function displayEphemeralWizard(targetBucket, replicationSourceClusterId, replicationSourceDatasetName, isTrueEphemeral) {
+function displayEphemeralWizard(sourceClusterName, targetBucket, replicationSourceClusterId, replicationSourceDatasetName, isTrueEphemeral) {
 	var form = document.getElementById('ephemeral_form_container')
 	
 	if (form.style.display == 'none')
@@ -347,12 +350,22 @@ function displayEphemeralWizard(targetBucket, replicationSourceClusterId, replic
 	
 	document.getElementById('ephemeral_target_bucket').value = targetBucket
 	document.getElementById('ephemeral_replication_source_clusterId').value = replicationSourceClusterId
+	document.getElementById('ephemeral_replication_source_clusterName').value = sourceClusterName
 	document.getElementById('ephemeral_replication_source_dataset_name').value = replicationSourceDatasetName
+	
+	clearSelect(document.getElementById("ephemeral_platform"))
+	option = document.createElement('option')
+	option.text = dpsPlatform;
+	option.value = dpsPlatform;
+	document.getElementById('ephemeral_platform').add(option)
+	
 	if(isTrueEphemeral){
 		document.getElementById('ephemeral_cluster_type').value = 'ephemeral' 
 	}else{
 		document.getElementById('ephemeral_cluster_type').value = 'semi-ephemeral'
 	}
+	
+	populateEphemeralClusterOptions()
 }
 
 function exploreAtlas() {
@@ -408,7 +421,7 @@ var form = document.getElementById('atlas_viewer_container')
 		targetBucket = tableLocation.replace('/'+name, '')
 		console.log(qualifiedName.split('.'))
 		sourceDatasetName = qualifiedName.split('.')[0]
-		sourceDatasetClusterName = qualifiedName.split('@')[1]
+		sourceDatasetClusterName = data.clusterName
 		console.log(sourceDatasetName)
 		atlasViewerHtml = '<div>'+
 		'<b>Name:</b> ' +name+'<br>'+
@@ -424,18 +437,19 @@ var form = document.getElementById('atlas_viewer_container')
 			currColumnType = data.referredEntities[currColumnGuid].attributes.type
 			atlasViewerHtml = atlasViewerHtml+'<tr><td>'+currColumnName+'</td><td>'+currColumnType+'</td></tr>'
 		}
+		
 		atlasViewerHtml = atlasViewerHtml + '<tr></table></div>'
 		if(sourceDatasetClusterName != document.getElementById('shared_services_cluster_name').value){
 			atlasViewerHtml = atlasViewerHtml + '<div style="float: right;">'
-										 + '		<button id="temp_workspace_button" onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', false)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
-										 + '			Clone Workspace'
+										 + '		<button id="temp_workspace_button" onclick="displayEphemeralWizard(\''+sourceDatasetClusterName+'\',\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', false)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
+										 + '			Replicate Workspace'
 										 + '		</button>'
 										 + '</div>'
 		}								 
 		if(sourceDatasetClusterName == document.getElementById('shared_services_cluster_name').value){
 			atlasViewerHtml = atlasViewerHtml + '<div style="float: right;">'
-											 + '		<button id="access_dataset_button" onclick="displayEphemeralWizard(\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', true)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
-											 + '			Provision Temp Workspace'
+											 + '		<button id="access_dataset_button" onclick="displayEphemeralWizard(\''+sourceDatasetClusterName+'\',\''+targetBucket+'\',\''+sourceClusterId+'\',\''+sourceDatasetName+'\', true)" class="btn btn-default" style="border-color: #456b7e; color: #456b7e;">'
+											 + '			Ephemeral Workspace'
 											 + '		</button>'
 											 + '</div>'
 		}
@@ -543,6 +557,30 @@ function populateOptions() {
 			}
 		}
 	});
+	console.log("**** DPS platform check: " + platform + " ? " + dpsPlatform)
+	if(platform==dpsPlatform){
+		option = document.createElement('option')
+	    option.text = 'Datalake';
+	    option.value = 'shared-services';
+		document.getElementById('cluster_type').add(option)
+		option = document.createElement('option')
+	    option.text = 'DPS Managed';
+	    option.value = 'dps-managed';
+		document.getElementById('cluster_type').add(option)
+	}else{
+		var marked = {}
+ 
+		var dropDown = document.getElementById('cluster_type')
+		for(i=0; i < dropDown.length; i++){
+			console.log("dropdown element " + dropDown.options[i].value)
+			if(dropDown.options[i].value == 'dps-managed' || dropDown.options[i].value == 'shared-services' ){
+				console.log("marking " + dropDown.options[i].value)
+				dropDown.options.remove(i)
+				i--
+				//marked[dropDown.options[i].value] = i
+			}	
+		}
+	}
 	document.getElementById("create_cluster").disabled = false;
 	document.getElementById("cluster_name").disabled = false;
 	document.getElementById("templates").disabled = false;
@@ -617,24 +655,29 @@ function refreshClusters(){
 	var isSharedServices = false
 	$.get(url, function(data) {
 		console.log(data)
-		
+		rds = data.rds
+		datalakes = data.datalakes
+		dpsPlatform = data.dpsPlatform
 		$('.cluster').remove();
 		for (var key in data) {
-			var clusterId = key
-			var clusterName = data[key].clusterName
-			var clusterType = data[key].clusterType
-			var platform = data[key].platform
-			var templateName = data[key].templateName
-			var clusterAmbariIp = data[key].clusterAmbariIp
-			var clusterStatus = data[key].clusterStatus 
-			console.log('Shared Services Status: ' + isSharedServices)
-			if(data[key].isSharedServices){
-				isSharedServices = true
-				$('#shared_services_cluster_name').val(clusterName)
-			}	
-			paintCluster(clusterId, clusterName, clusterType, clusterStatus, platform, templateName, clusterAmbariIp)
+			if(key=='datalakes' || key=='rds' || key=='dpsPlatform'){
+			}else{
+				var clusterId = key
+				var clusterName = data[key].clusterName
+				var clusterType = data[key].clusterType
+				var platform = data[key].platform
+				var templateName = data[key].templateName
+				var clusterAmbariIp = data[key].clusterAmbariIp
+				var clusterStatus = data[key].clusterStatus 
+				console.log('Shared Services Status: ' + isSharedServices)
+				if(data[key].isSharedServices){
+					isSharedServices = true
+					$('#shared_services_cluster_name').val(clusterName)
+				}
+				paintCluster(clusterId, clusterName, clusterType, clusterStatus, platform, templateName, clusterAmbariIp)
+				$('#shared_services_status').val(isSharedServices)
+			}
 		}
-		$('#shared_services_status').val(isSharedServices)
 	});
 	console.log('Shared Services Status: ' + document.getElementById('shared_services_status').value)
 	console.log('Shared Services Cluster Name: ' + document.getElementById('shared_services_cluster_name').value)
@@ -658,6 +701,7 @@ function createCluster(isEphemeral){
 		var credentialId = document.getElementById("ephemeral_credentials").value;
 		var targetBucket = document.getElementById("ephemeral_target_bucket").value;
 		var sourceClusterId = document.getElementById("ephemeral_replication_source_clusterId").value;
+		var sourceClusterName = document.getElementById("ephemeral_replication_source_clusterName").value;
 		var sourceDatasetName = document.getElementById("ephemeral_replication_source_dataset_name").value;
 		var sharedServicesIp = "place_holder";
 	}else{
@@ -676,21 +720,36 @@ function createCluster(isEphemeral){
 		
 	var ambariServerIp = "PENDING"
 	
-	console.log("/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesIp="+encodeURIComponent(sharedServicesIp)+"&targetBucket="+encodeURIComponent(targetBucket)+"&sourceClusterId="+encodeURIComponent(sourceClusterId)+"&sourceDatasetName="+encodeURIComponent(sourceDatasetName));
-	var url = "/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesIp="+encodeURIComponent(sharedServicesIp)+"&targetBucket="+encodeURIComponent(targetBucket)+"&sourceClusterId="+encodeURIComponent(sourceClusterId)+"&sourceDatasetName="+encodeURIComponent(sourceDatasetName);
+	console.log("/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesCluster="+encodeURIComponent(sourceClusterName)+"&targetBucket="+encodeURIComponent(targetBucket)+"&sourceClusterId="+encodeURIComponent(sourceClusterId)+"&sourceDatasetName="+encodeURIComponent(sourceDatasetName));
+	var url = "/createCluster?clusterName="+clusterName+"&clusterType="+clusterType+"&templateId="+templateId+"&platform="+platform+"&credentialId="+credentialId+"&sharedServicesCluster="+encodeURIComponent(sourceClusterName)+"&targetBucket="+encodeURIComponent(targetBucket)+"&sourceClusterId="+encodeURIComponent(sourceClusterId)+"&sourceDatasetName="+encodeURIComponent(sourceDatasetName);
 	
+	var valid = true
 	if(isEphemeral || isClusterNameValid()){
+		if(clusterType == 'shared-services' || clusterType == 'dps-managed'){
+			if(rds[dpsPlatform] !=  null){
+				valid = true
+			}else{
+				valid = false
+				alert("There is no RDS Service deployed in the selected Cloud Platform. Deploy RDS Service cluster type to the selected Cloud Platform to enable DPS Managed and Datalake services")
+			}
+		}else{
+			valid = true	
+		}
+	}else{
+		valid = false
+		alert("Cluster Name must be at least 5 characters in length and not contain characters other than a-z, 0-9, -")	
+	}
+	
+	if(valid){
 		console.log(url);
 		$.get(url, function(data) {
 			console.log(data);
 			paintCluster(data.id, data.name, clusterTypeName, data.status, platform, templateName, ambariServerIp)
 		});
-	
+
 		document.getElementById('form_container').style.display = 'none'
 		document.getElementById('ephemeral_form_container').style.display = 'none'
 		document.getElementById("ephemeral_cluster_name").value = "ephemeral"+Math.floor((Math.random() * 10000) + 1)
-	}else{
-		alert("Cluster Name must be at least 5 characters in length and not contain characters other than a-z, 0-9, -")	
 	}
 }
 
@@ -845,6 +904,9 @@ var series;
 var xAxisLabels;
 
 var tree1;
+var datalakes;
+var rds;
+var dpsPlatform;
 
 getFileTree()
 
