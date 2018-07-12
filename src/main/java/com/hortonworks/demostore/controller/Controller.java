@@ -898,11 +898,13 @@ public class Controller{
     		urlString = cloudbreakUrl+cloudbreakApiUriV2+stacksUri;
     		LOG.info("********** Cluster Type:" + type);
     		if (type.equalsIgnoreCase("semi-ephemeral")){    	
-    			blueprint = "TEMP-WORKSPACE-V2.1";
+    			blueprint = "TEMP-WORKSPACE-V2.3";
     			ldapConfigName = "\""+rdsServicesMap.get(platform).get("ldap")+"\"";
     			//rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
-    			recipeId = createSemiEphemeralRecipe(clusterName, sourceClusterId, sourceDatasetName);
-    			recipes += ",\""+recipeId+"\"";
+    			//recipeId = createSemiEphemeralRecipe(clusterName, sourceClusterId, sourceDatasetName);
+    			//recipes += ",\""+recipeId+"\"";
+    			recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    			customInputs = "\"dps.host\":\""+dpsHost+"\",\"dps.cluster.is.datalake\":\"false\",\"dlm.initial.partner.cluster\":\""+sourceClusterId+" \",\"dlm.initial.policy.dataset\":\""+sourceDatasetName+"\"";
     			workerCount = "3";
     			storageConfig = "{\n" + 
 	    				"          \"value\": \"" + replLocation + "\",\n" + 
@@ -934,7 +936,7 @@ public class Controller{
     			ldapConfigName = "\""+rdsServicesMap.get(platform).get("ldap")+"\"";
     			rdsConfigs = "\""+rdsServicesMap.get(platform).get("hive")+"\",\""+rdsServicesMap.get(platform).get("ranger")+"\"";
     			mpacks = "";
-    			customInputs = "\"datalake.master.node\":\""+sharedServicesMap.get("ambariHost")+"\"";
+    			customInputs = "\"datalake.master.node\":\""+sharedServicesMap.get(sharedServicesCluster).get("ambariHost")+"\"";
     			storageConfig = "{\n" + 
 	    				"          \"value\": \"" + warehouseLocation + "\",\n" + 
 	    				"          \"propertyFile\": \"hive-site\",\n" + 
@@ -959,20 +961,21 @@ public class Controller{
 					"       }";
 			
     		}else if(type.equalsIgnoreCase("rds-service")) {
-    			blueprint = "RDS-SERVICE-V1.4";
+    			blueprint = "RDS-SERVICE-V1.6";
     			recipes = "\""+postgresMetastoreRecipeName+"\"";
     			mpacks = "";
     			gcsSecRole = "null";
     			s3SecRole = "null";
     			clusterTags = "\"rds-service\": \"true\"";
     		}else if(type.equalsIgnoreCase("dps-managed")) {
-    			blueprint = "DPS-MANAGED-V2.5";
+    			blueprint = "DPS-MANAGED-V2.8";
     			workerCount = "3";
     			ldapConfigName = "\""+rdsServicesMap.get(platform).get("ldap")+"\"";
     			//rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
     			//recipes="\""+postgresMetastoreRecipeName+"\",\""+removeDpsClusterRecipeName+"\"";
     			recipes+=",\""+registerDpsClusterRecipeName+"\"";
     			//customInputs = "\"dlm.redhat7.repo.url\":\""+dlmRedhat7RepoUrl+"\",\"dss.redhat7.repo.url\":\""+dssRedhat7RepoUrl+"\",\"dlm.redhat6.repo.url\":\""+dlmRedhat6RepoUrl+"\",\"dss.redhat6.repo.url\":\""+dssRedhat6RepoUrl+"\"";
+    			customInputs = "\"dps.host\":\""+dpsHost+"\",\"dps.cluster.is.datalake\":\"false\"";
     			storageConfig = "{\n" + 
 	    				"          \"value\": \"" + replLocation + "\",\n" + 
 	    				"          \"propertyFile\": \"hive-site\",\n" + 
@@ -993,7 +996,7 @@ public class Controller{
     					"        \"ssoType\": \"SSO_PROVIDER\"\n" +
     					"		 }\n";
     		}else if(type.equalsIgnoreCase("shared-services")) {
-    			blueprint = "DATALAKE-SERVICE-V2.4";
+    			blueprint = "DATALAKE-SERVICE-V2.5";
     			workerCount = "3";
     			ldapConfigName = "\""+rdsServicesMap.get(platform).get("ldap")+"\"";
     			rdsConfigs = "\""+rdsServicesMap.get(platform).get("hive")+"\",\""+rdsServicesMap.get(platform).get("ranger")+"\"";
@@ -1002,6 +1005,7 @@ public class Controller{
     			auditLocation = storageProtocol+ storageBucket + "/" + clusterName + "/apps/ranger/audit";
     	  		warehouseLocation = storageProtocol + storageBucket + "/" + clusterName + "/apps/hive/warehouse";
     			replLocation = storageProtocol + storageBucket + "/" + clusterName;
+    			customInputs = "\"dps.host\":\""+dpsHost+"\",\"dps.cluster.is.datalake\":\"true\"";
     	  		storageConfig = "{\n" + 
     	    				"          \"value\": \"" + warehouseLocation + "\",\n" + 
     	    				"          \"propertyFile\": \"hive-site\",\n" + 
@@ -1714,7 +1718,7 @@ public class Controller{
         				sharedServicesAmbariHost = response.getJSONObject(i).getJSONObject("data").getString("ambariUrl").replace("http://", "").split(":")[0];
         				clusterData.put("id", response.getJSONObject(i).getJSONObject("data").getString("id"));
         				clusterData.put("clusterName", response.getJSONObject(i).getJSONObject("data").getString("name"));
-        				clusterData.put("ambarHost", response.getJSONObject(i).getJSONObject("data").getString("ambariUrl").split("//")[1].split(":")[0]);
+        				clusterData.put("ambariHost", response.getJSONObject(i).getJSONObject("data").getString("ambariUrl").split("//")[1].split(":")[0]);
         				isSharedServicesProvisioned = true;
         				sharedServicesMap.put(clusterData.get("clusterName"), clusterData);
         				//LOG.info("********** sharedServicesClusterName: " + sharedServicesClusterName);
