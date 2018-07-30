@@ -148,24 +148,20 @@ public class Controller{
 		
 		Map<String, String> env = System.getenv();
 		
+		if(env.get("API_HOST") != null){
+			cloudbreakApiHost = (String)env.get("API_HOST");
+			cloudbreakAuthHost = cloudbreakApiHost;
+        }
+        if(env.get("API_PORT") != null){
+        		cloudbreakApiPort = (String)env.get("API_PORT");
+        }
 		if(env.get("ADMIN_USER_NAME") != null){
 			adminUserName=(String)env.get("ADMIN_USER_NAME");
 		}
 		if(env.get("ADMIN_PASSWORD") != null){
 			adminPassword = (String)env.get("ADMIN_PASSWORD");
 		}		
-		if(env.get("API_HOST") != null){
-			cloudbreakApiHost = (String)env.get("API_HOST");
-        }
-        if(env.get("API_PORT") != null){
-        		cloudbreakApiPort = (String)env.get("API_PORT");
-        }
-        if(env.get("AUTH_HOST") != null){
-        		cloudbreakAuthHost = (String)env.get("AUTH_HOST");
-        }
-        if(env.get("AUTH_PORT") != null){
-        		cloudbreakAuthPort = (String)env.get("AUTH_PORT");
-        }
+		
         if(env.get("DPS_HOST") != null){
     			dpsHost = (String)env.get("DPS_HOST");
     			dpsUrl = "https://"+dpsHost;
@@ -179,8 +175,14 @@ public class Controller{
         if(env.get("DPS_ADMIN_PASSWORD") != null){
         		dpsAdminPassword = (String)env.get("DPS_ADMIN_PASSWORD");
         }
+        
         /*
-        if(env.get("ATLAS_HOST") != null){
+        if(env.get("AUTH_HOST") != null){
+        		cloudbreakAuthHost = (String)env.get("AUTH_HOST");
+        }
+        if(env.get("AUTH_PORT") != null){
+        		cloudbreakAuthPort = (String)env.get("AUTH_PORT");
+        }if(env.get("ATLAS_HOST") != null){
         		atlasApiHost = (String)env.get("ATLAS_HOST");
         }
         if(env.get("ATLAS_PORT") != null){
@@ -192,7 +194,8 @@ public class Controller{
 
         atlasUrl = "http://"+atlasApiHost+":"+atlasApiPort;
         cloudbreakUrl = "https://"+cloudbreakApiHost+":"+cloudbreakApiPort;
-        cloudbreakAuthUrl = "http://"+cloudbreakAuthHost+":"+cloudbreakAuthPort+"/oauth/authorize?response_type=token&client_id=cloudbreak_shell";
+        //cloudbreakAuthUrl = "http://"+cloudbreakAuthHost+":"+cloudbreakAuthPort+"/oauth/authorize?response_type=token&client_id=cloudbreak_shell";
+        cloudbreakAuthUrl = "https://"+cloudbreakAuthHost+"/identity/oauth/authorize?response_type=token&client_id=cloudbreak_shell&redirect_uri=http://cloudbreak.shell";
         System.out.println("********************** Controller ()  DPS Url : " + dpsUrl);
         System.out.println("********************** Controller ()  Shared Services Amabri : " + sharedServicesAmbariHost);
         System.out.println("********************** Controller ()  Cloudbreak API url set : " + cloudbreakUrl);
@@ -1966,18 +1969,19 @@ public class Controller{
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
             connection.setInstanceFollowRedirects(false);
-            connection.setRequestMethod("POST");
+            connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept","application/x-www-form-urlencoded");
+            connection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
             
             OutputStream os = connection.getOutputStream();
-    		os.write(credentials.getBytes());
-    		os.flush();
+    			os.write(credentials.getBytes());
+    			os.flush();
     		
             if (connection.getResponseCode() != 302) {
     			throw new RuntimeException("Failed : HTTP error code : "+ connection.getResponseCode());
     		}
             
-            //System.out.println(connection.getResponseMessage());
+        //System.out.println(connection.getHeaderFields());
     		String[] responseArray = connection.getHeaderField("Location").split("access_token=")[1].split("&");
     		System.out.println(responseArray[0]);
     		//System.out.println(responseArray[1].split("=")[1]);
