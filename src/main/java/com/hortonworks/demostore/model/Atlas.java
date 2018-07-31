@@ -80,6 +80,12 @@ public abstract class Atlas {
         if(env.get("DPS_HOST") != null){
         	dpsHost = (String)env.get("DPS_HOST");
         }
+        if(env.get("DPS_ADMIN_USER_NAME") != null){
+    			adminUserName=(String)env.get("DPS_ADMIN_USER_NAME");
+        }
+        if(env.get("DPS_ADMIN_PASSWORD") != null){
+    			adminPassword = (String)env.get("DPS_ADMIN_PASSWORD");
+        }
         server = "http://"+atlasHost+":"+atlasPort;
         dps_url = "https://"+dpsHost;
 		atlasFileTree = getFileTree();
