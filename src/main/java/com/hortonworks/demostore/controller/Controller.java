@@ -126,7 +126,7 @@ public class Controller{
 	private String hiveMetastoreRdsPprt = "5432";
 	private String rangerMetastoreRdsPprt = "5432";
 	
-	private String storageBucket = "vvaks";
+	private String storageBucket = "shared-warehouse";
 	
 	private String publicKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4YhcNwxMvZLyLECWfJyqf5rdk+R+DM2gzt0cEFYu9/SVV3GWAGvESevGCMEZaqapMDWgY+9n5uFgQRKo8UeVH1cJuRqQUZOY44ZiZokiMZ+kkY5rPOj44ArKXvqQDz0DB1EVyMYB8LATjloDtcghl51Z/y2hXMjaxpewYokTh8YTeMPvyBYvvIuRIW0EOMMDLXfR3EXaLwQAtlDjWkQYezFnkNM4lQsYJ50ohb/DA68ZCBhvTYqPYPbFmeNHubt/ymucecDaAJFbwmdHf6j+8xbT/HH/4GbCUXgU9RNCKgJfBlOcgEEBCy0cbg/hFz2sawMA+epuX4OhY2s9atugV cloudbreak";
 
@@ -791,6 +791,7 @@ public class Controller{
     		String gatewayConfig = "null";
     		//String stackRepoVersion = "2.6.4.5-2";
     		String stackRepoVersion = "2.6.5.0-292";
+    		String imageType = "prewarmed";
     		if(platform.equalsIgnoreCase("AWS")) {
     			//ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.6.1.3";
         		ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.6.2.0";
@@ -802,7 +803,7 @@ public class Controller{
     			//stackDefUrl = "http://private-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.4.5-2/HDP-2.6.4.5-2.xml";
     			stackDefUrl = "http://public-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.5.0/HDP-2.6.5.0-292.xml";
     		}
-    		String mpacks = "{\"name\":\"dlm-beacon-centos7-1-1-0\"},{\"name\":\"dss-dpprofiler-centos7-1-0-0\"}";
+    		String mpacks = "{\"name\":\"dlm-beacon-centos7-1-1-2\"},{\"name\":\"dss-dpprofiler-centos7-1-2-0\"}";
     		String recipes = "";
     		String rdsConfigs = "";
     		String ldapConfigName = "null";
@@ -829,14 +830,15 @@ public class Controller{
     		  instanceType = "m3.xlarge";
     		  volumeType = "standard";
     		  volumeCount = "1";
-    		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-1-0\",\""+removeDpsClusterRecipeName+"\"";
+    		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-2-0\",\""+removeDpsClusterRecipeName+"\"";
     		  //recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-aws-1-1-0\"";
-    		  mpacks = "{\"name\":\"dlm-beacon-centos6-1-1-0\"},{\"name\":\"dss-dpprofiler-centos6-1-0-0\"}";
+    		  //mpacks = "{\"name\":\"dlm-beacon-centos6-1-1-0\"},{\"name\":\"dss-dpprofiler-centos6-1-0-0\"}";
+    		  mpacks = "{\"name\":\"dlm-beacon-centos6-1-1-2\"},{\"name\":\"dss-dpprofiler-centos6-1-2-0\"}";
     		  storageProtocol = "s3a://";
     		  auditLocation = storageProtocol + storageBucket + "/" + sharedServicesClusterName + "/apps/ranger/audit";
   		  warehouseLocation = storageProtocol + storageBucket + "/" + sharedServicesClusterName + "/apps/hive/warehouse";
   		  replLocation = storageProtocol + storageBucket + "/" + clusterName;
-  		  s3SecRole = "{\"instanceProfile\": \"arn:aws:iam::081339556850:instance-profile\\/shared-services-s3-access\"}";
+  		  s3SecRole = "{\"instanceProfile\": \"arn:aws:iam::081339556850:instance-profile/shared-services-s3-access\"}";
     		}else if (platform.equalsIgnoreCase("OPENSTACK")){
     		  region="RegionOne";
     		  zone="SE";
@@ -852,7 +854,7 @@ public class Controller{
     		  instanceType = "m3.xlarege";
     		  volumeType = "HDD";
     		  volumeCount = "0";
-    		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-1-0\",\""+removeDpsClusterRecipeName+"\"";
+    		  recipes="\""+postgresMetastoreRecipeName+"\",\"install-dps-agents-1-2-0\",\""+removeDpsClusterRecipeName+"\"";
     		  //recipes = "\"configure-postgres-metastores\",\"install-dps-agents-1-1-0\",\"dps-dlm-remove-cluster-openstack-1-1-0\"";
     		}else if (platform.equalsIgnoreCase("GCP")){
   		  region="us-east1";
@@ -964,7 +966,7 @@ public class Controller{
 					"       }";
 			
     		}else if(type.equalsIgnoreCase("rds-service")) {
-    			blueprint = "RDS-SERVICE-V1.6";
+    			blueprint = "RDS-SERVICE-V1.5";
     			recipes = "\""+postgresMetastoreRecipeName+"\"";
     			mpacks = "";
     			gcsSecRole = "null";
@@ -976,7 +978,8 @@ public class Controller{
     			ldapConfigName = "\""+rdsServicesMap.get(platform).get("ldap")+"\"";
     			//rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
     			//recipes="\""+postgresMetastoreRecipeName+"\",\""+removeDpsClusterRecipeName+"\"";
-    			recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    			//recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    			recipes="\""+postgresMetastoreRecipeName+"\",\""+registerDpsClusterRecipeName+"\",\""+removeDpsClusterRecipeName+"\",\"install-dps-agents-1-2-0\"";
     			//customInputs = "\"dlm.redhat7.repo.url\":\""+dlmRedhat7RepoUrl+"\",\"dss.redhat7.repo.url\":\""+dssRedhat7RepoUrl+"\",\"dlm.redhat6.repo.url\":\""+dlmRedhat6RepoUrl+"\",\"dss.redhat6.repo.url\":\""+dssRedhat6RepoUrl+"\"";
     			customInputs = "\"dps.host\":\""+dpsHost+"\",\"dps.cluster.is.datalake\":\"false\"";
     			storageConfig = "{\n" + 
@@ -1037,6 +1040,47 @@ public class Controller{
     					"        \"gatewayType\": \"INDIVIDUAL\",\n" + 
     					"        \"ssoType\": \"SSO_PROVIDER\"\n" +
     					"		}\n";
+    		}else if(type.equalsIgnoreCase("connected-platform")) {
+    			blueprint = "CONNECTED-PLATFORM-3.0-V1.3";
+    			workerCount = "3";
+    			stackOs = "redhat7";
+      		imageId = "69db7e20-f3ac-4d45-6f95-39204e70ddcf"; //HDP 3.0.0.0 image
+      		instanceType = "m5.2xlarge";
+      		recipes="\""+postgresMetastoreRecipeName+"\",\""+removeDpsClusterRecipeName+"\",\"initialize-registries\",\"remount-tmpfs-exec\"";
+      		mpacks = "{\"name\":\"hdf-3-2-management-pack\"}";
+    			//ldapConfigName = "\""+rdsServicesMap.get(platform).get("ldap")+"\"";
+    			//rdsConfigs = "\""+rdsServiceMap.get(platform).get("hive")+"\",\""+rdsServiceMap.get(platform).get("ranger")+"\"";
+    			//recipes="\""+postgresMetastoreRecipeName+"\",\""+removeDpsClusterRecipeName+"\"";
+    			recipes+=",\""+registerDpsClusterRecipeName+"\"";
+    			customInputs =  "\"yarn.vcores\": \"6\",\"yarn.max.container\": \"23296\",\"storage.bucket\":\""+storageBucket+"\",\"nifi.registry.git.repo.url\":\"https://github.com/vakshorton/nifi-flow-registry\",\"scripts.repo.name\":\"CloudBreakArtifacts\"";
+    			//customInputs = "\"dps.host\":\""+dpsHost+"\",\"dps.cluster.is.datalake\":\"false\"";
+    			ambariRepoVersion = "2.7.0.0";
+        		ambariRepoGpgKey = "http://public-repo-1.hortonworks.com/ambari/centos7/RPM-GPG-KEY/RPM-GPG-KEY-Jenkins";
+        		hdpPlatformVerson = "HDP 3.0";
+        		stackMajorVersion = "3.0";
+        		stackRepoVersion = "3.0.0.0-1634";
+        		imageType = "base";
+    			if(platform.equalsIgnoreCase("AWS")) {
+            		ambariRepoBaseUrl = "http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.7.0.0";
+            		stackDefUrl = "http://public-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.0.0.0/HDP-3.0.0.0-1634.xml";
+        		}
+    			auditLocation = storageProtocol + storageBucket + "/" + clusterName + "/apps/ranger/audit";
+    	  		warehouseLocation = storageProtocol + storageBucket + "/" + clusterName + "/apps/hive/warehouse";
+    			storageConfig = "{\n" + 
+	    				"          \"value\": \"" + warehouseLocation + "\",\n" + 
+	    				"          \"propertyFile\": \"hive-site\",\n" + 
+	    				"          \"propertyName\": \"hive.metastore.warehouse.dir\"\n" + 
+	    				"        },\n" + 
+	    				"        {\n" + 
+	    				"          \"value\": \"" + auditLocation + "\",\n" + 
+	    				"          \"propertyFile\": \"ranger-env\",\n" + 
+	    				"          \"propertyName\": \"xasecure.audit.destination.hdfs.dir\"\n" + 
+	    				"        },\n" +
+	    				"        {\n " +
+	    				"		   \"value\": \"" + replLocation + "\",\n" + 
+	    				"          \"propertyFile\": \"hive-site\",\n" + 
+	    				"          \"propertyName\": \"hive.repl.replica.functions.root.dir\"\n" + 
+	    				"        }\n";
     		}
     		
     		stackDef =
@@ -1087,7 +1131,7 @@ public class Controller{
     				"    \"imageCatalog\": \""+imageCatalog+"\",\n" + 
     				"    \"imageId\": \""+imageId+"\"\n" + 
     				"  },\n" + 
-    				"  \"imageType\": \"prewarmed\",\n" + 
+    				"  \"imageType\": \""+imageType+"\",\n" + 
     				"  \"instanceGroups\": [\n" + 
     				"    {\"parameters\": {},\n" + 
     				"      \"template\": {\n" + 
@@ -1118,8 +1162,32 @@ public class Controller{
     				"      \"nodeCount\": "+workerCount+",\n" + 
     				"      \"group\": \"worker\",\n" + 
     				"      \"type\": \"CORE\",\n" + 
+    				"      \"recoveryMode\": \"MANUAL\",\n";
+    				if(type.equalsIgnoreCase("connected-platform")) {
+    					stackDef += "      \"recipeNames\": [\"remount-tmpfs-exec\"],\n";
+    				}else {
+    					stackDef += "      \"recipeNames\": [],\n";
+    				}
+    				stackDef += "      \"securityGroup\": {\"securityGroupId\": \""+securityGroupId+"\"}\n" + 
+    				"    }\n";
+    		}
+    		
+    		if(type.equalsIgnoreCase("connected-platform")) {
+    			stackDef +=
+    				"    ,{\n" + 
+    				"      \"parameters\": {},\n" + 
+    				"      \"template\": {\n" + 
+    				"        \"parameters\": {\"encrypted\": false},\n" +
+    				"        \"instanceType\": \""+instanceType+"\",\n" +
+    				"        \"volumeType\": \""+volumeType+"\",\n" + 
+    				"        \"volumeCount\": "+volumeCount+",\n" + 
+    				"        \"volumeSize\": 100\n" + 
+    				"      },\n" + 
+    				"      \"nodeCount\": 1,\n" + 
+    				"      \"group\": \"druid_worker\",\n" + 
+    				"      \"type\": \"CORE\",\n" + 
     				"      \"recoveryMode\": \"MANUAL\",\n" + 
-    				"      \"recipeNames\": [ ],\n" + 
+    				"      \"recipeNames\": [\"initialize-streaming-cluster\",\"remount-tmpfs-exec\"],\n" + 
     				"      \"securityGroup\": {\"securityGroupId\": \""+securityGroupId+"\"}\n" + 
     				"    }\n";
     		}
